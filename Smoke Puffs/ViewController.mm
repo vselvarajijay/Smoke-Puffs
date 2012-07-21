@@ -7,6 +7,7 @@
 //
 
 #import "ViewController.h"
+#import "UIImage+OpenCV.h"
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -75,6 +76,8 @@ enum
 
 @implementation ViewController
 
+@synthesize captureSession = _captureSession;
+
 @synthesize context = _context;
 @synthesize effect = _effect;
 @synthesize width = _width;
@@ -86,27 +89,205 @@ enum
 
 - (void)viewDidLoad
 {
-  [super viewDidLoad];
+    [super viewDidLoad];
   
-  self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
+    self.context = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2];
   
-  if (!self.context) {
-    NSLog(@"Failed to create ES context");
-  }
+    if (!self.context) {
+        NSLog(@"Failed to create ES context");
+    }
   
-  GLKView *view = (GLKView *)self.view;
-  view.context = self.context;
-  view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
+    GLKView *view = (GLKView *)self.view;
+    view.context = self.context;
+    view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
   
-  self.width = 60;
-  self.height = 45;
-  self.fluid = new Fluid(self.width, self.height);
-  self.dt = 0.25f;
-  self.ball_x = self.width * 0.5f;
-  self.ball_y = self.height * 0.5f;
-  
-  [self setupGL];
-  [self.view setMultipleTouchEnabled:YES];
+    self.width = 60;
+    self.height = 45;
+    self.fluid = new Fluid(self.width, self.height);
+    self.dt = 0.25f;
+    self.ball_x = self.width * 0.5f;
+    self.ball_y = self.height * 0.5f;
+    
+    
+    [self initCapture];
+       
+    [self setupGL];
+    [self.view setMultipleTouchEnabled:YES];
+        
+    
+}
+
+
+- (void)initCapture {
+	/*We setup the input*/
+	AVCaptureDeviceInput *captureInput = [AVCaptureDeviceInput 
+										  deviceInputWithDevice:[AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo] 
+										  error:nil];
+	/*We setupt the output*/
+	AVCaptureVideoDataOutput *captureOutput = [[AVCaptureVideoDataOutput alloc] init];
+	/*While a frame is processes in -captureOutput:didOutputSampleBuffer:fromConnection: delegate methods no other frames are added in the queue.
+	 If you don't want this behaviour set the property to NO */
+	captureOutput.alwaysDiscardsLateVideoFrames = YES; 
+	/*We specify a minimum duration for each frame (play with this settings to avoid having too many frames waiting
+	 in the queue because it can cause memory issues). It is similar to the inverse of the maximum framerate.
+	 In this example we set a min frame duration of 1/10 seconds so a maximum framerate of 10fps. We say that
+	 we are not able to process more than 10 frames per second.*/
+	//captureOutput.minFrameDuration = CMTimeMake(1, 10);
+	
+	/*We create a serial queue to handle the processing of our frames*/
+	dispatch_queue_t queue;
+	queue = dispatch_queue_create("cameraQueue", NULL);
+	[captureOutput setSampleBufferDelegate:self queue:queue];
+	dispatch_release(queue);
+	// Set the video output to store frame in BGRA (It is supposed to be faster)
+	NSString* key = (NSString*)kCVPixelBufferPixelFormatTypeKey; 
+	NSNumber* value = [NSNumber numberWithUnsignedInt:kCVPixelFormatType_32BGRA]; 
+	NSDictionary* videoSettings = [NSDictionary dictionaryWithObject:value forKey:key]; 
+	[captureOutput setVideoSettings:videoSettings]; 
+	/*And we create a capture session*/
+	self.captureSession = [[AVCaptureSession alloc] init];
+	/*We add input and output*/
+	[self.captureSession addInput:captureInput];
+	[self.captureSession addOutput:captureOutput];
+    /*We use medium quality, ont the iPhone 4 this demo would be laging too much, the conversion in UIImage and CGImage demands too much ressources for a 720p resolution.*/
+    [self.captureSession setSessionPreset:AVCaptureSessionPresetMedium];	
+	[self.captureSession startRunning];
+	
+}
+
+
+#pragma mark -
+#pragma mark AVCaptureSession delegate
+- (void)captureOutput:(AVCaptureOutput *)captureOutput 
+didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer 
+	   fromConnection:(AVCaptureConnection *)connection 
+{ 
+	/*We create an autorelease pool because as we are not in the main_queue our code is
+	 not executed in the main thread. So we have to create an autorelease pool for the thread we are in*/
+	
+	//NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
+	
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer); 
+    /*Lock the image buffer*/
+    CVPixelBufferLockBaseAddress(imageBuffer,0); 
+    /*Get information about the image*/
+    uint8_t *baseAddress = (uint8_t *)CVPixelBufferGetBaseAddress(imageBuffer); 
+    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer); 
+    size_t width = CVPixelBufferGetWidth(imageBuffer); 
+    size_t height = CVPixelBufferGetHeight(imageBuffer);  
+    
+    /*Create a CGImageRef from the CVImageBufferRef*/
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB(); 
+    CGContextRef newContext = CGBitmapContextCreate(baseAddress, width, height, 8, bytesPerRow, colorSpace, kCGBitmapByteOrder32Little | kCGImageAlphaPremultipliedFirst);
+    CGImageRef newImage = CGBitmapContextCreateImage(newContext); 
+	
+    /*We release some components*/
+    CGContextRelease(newContext); 
+    CGColorSpaceRelease(colorSpace);
+    
+    /*We display the result on the custom layer. All the display stuff must be done in the main thread because
+	 UIKit is no thread safe, and as we are not in the main thread (remember we didn't use the main_queue)
+	 we use performSelectorOnMainThread to call our CALayer and tell it to display the CGImage.*/
+	///[self.customLayer performSelectorOnMainThread:@selector(setContents:) withObject: (id) newImage waitUntilDone:YES];
+	
+	/*We display the result on the image view (We need to change the orientation of the image so that the video is displayed correctly).
+	 Same thing as for the CALayer we are not in the main thread so ...*/
+	UIImage *image= [UIImage imageWithCGImage:newImage scale:1.0 orientation:UIImageOrientationRight];
+	
+    [self findBlobs:image];
+    
+	/*We relase the CGImageRef*/
+	CGImageRelease(newImage);
+	
+	//[self.imageView performSelectorOnMainThread:@selector(setImage:) withObject:image waitUntilDone:YES];
+	
+	/*We unlock the  image buffer*/
+	CVPixelBufferUnlockBaseAddress(imageBuffer,0);
+	
+	//[pool drain];
+}
+
+- (IplImage *)CreateIplImageFromUIImage:(UIImage *)image {
+    // Getting CGImage from UIImage
+    CGImageRef imageRef = image.CGImage;
+    
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    // Creating temporal IplImage for drawing
+    IplImage *iplimage = cvCreateImage(
+                                       cvSize(image.size.width,image.size.height), IPL_DEPTH_8U, 4
+                                       );
+    // Creating CGContext for temporal IplImage
+    CGContextRef contextRef = CGBitmapContextCreate(
+                                                    iplimage->imageData, iplimage->width, iplimage->height,
+                                                    iplimage->depth, iplimage->widthStep,
+                                                    colorSpace, kCGImageAlphaPremultipliedLast|kCGBitmapByteOrderDefault
+                                                    );
+    // Drawing CGImage to CGContext
+    CGContextDrawImage(
+                       contextRef,
+                       CGRectMake(0, 0, image.size.width, image.size.height),
+                       imageRef
+                       );
+    CGContextRelease(contextRef);
+    CGColorSpaceRelease(colorSpace);
+    
+    // Creating result IplImage
+    IplImage *ret = cvCreateImage(cvGetSize(iplimage), IPL_DEPTH_8U, 3);
+    cvCvtColor(iplimage, ret, CV_RGBA2BGR);
+    cvReleaseImage(&iplimage);
+    
+    return ret;
+}
+
+
+
+-(void)findBlobs:(UIImage *)image {
+    
+    _lastFrame = [self CreateIplImageFromUIImage:image];
+    
+    cv::resize(_lastFrame, _lastFrame, cv::Size(20,20));
+                
+    int greens_found = 0;
+    int greens_x = 0;
+    int greens_y = 0;
+           
+    int blues_found = 0;
+    int blues_x = 0;
+    int blues_y = 0;
+    for(int x = 0;x<_lastFrame.cols;x++){
+        for(int y=0;y<_lastFrame.rows;y++) {
+            int rVal = _lastFrame.at<cv::Vec3b>(x,y)[0];
+            int gVal = _lastFrame.at<cv::Vec3b>(x,y)[1];
+            int bVal = _lastFrame.at<cv::Vec3b>(x,y)[2];
+                
+            if(gVal>100 && rVal<90 && bVal<90){
+                greens_found++;
+                greens_x = greens_x + x;
+                greens_y = greens_y + y;
+            }
+                        
+            if(gVal<100 && rVal<100 && bVal>200){
+                blues_found++;
+                blues_x = blues_x + x;
+                blues_y = blues_y + y;
+            }
+        }
+            
+        if(greens_found>0){
+            int x = greens_x/greens_found;
+            int y = greens_y/greens_found;
+            NSLog(@"Greens Found: %i, %i",x, y);
+            cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));
+        }
+            
+        if(blues_found>0){
+            int x = blues_x/blues_found;
+            int y = blues_y/blues_found;
+            NSLog(@"Blues Found: %i, %i",x, y);
+            cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(255,255,255));
+        }
+    }                 
+    
 }
 
 - (void)viewDidUnload
@@ -172,12 +353,13 @@ enum
   for (UIView *view in subviews) {
     [view removeFromSuperview];
   }
-  
+      
   UIView *touchView = [[UIView alloc] init];
   [touchView setBackgroundColor:[UIColor redColor]];
   touchView.frame = CGRectMake(self.ball_x * 1024 / self.width, 768 - self.ball_y * 768 / self.height, 30, 30);
   touchView.layer.cornerRadius = 15;
   [self.view addSubview:touchView];
+    //[self findBlobs];
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect

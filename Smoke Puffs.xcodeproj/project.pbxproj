@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D8DB00D15BB6ED8002E1554 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8DB00C15BB6ED8002E1554 /* libz.dylib */; };
 		C968782B15BA6901001F8D84 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782A15BA6901001F8D84 /* UIKit.framework */; };
 		C968782D15BA6901001F8D84 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782C15BA6901001F8D84 /* Foundation.framework */; };
 		C968782F15BA6901001F8D84 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782E15BA6901001F8D84 /* CoreGraphics.framework */; };
@@ -62,10 +63,8 @@
 		C989481D15BB59A8009517AA /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481C15BB59A8009517AA /* ImageIO.framework */; };
 		C989481E15BB59B2009517AA /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782E15BA6901001F8D84 /* CoreGraphics.framework */; };
 		C989481F15BB59BD009517AA /* OpenCV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481415BB597F009517AA /* OpenCV.framework */; };
-		C989482115BB59D0009517AA /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C989482015BB59D0009517AA /* libz.dylib */; };
 		C989482415BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */; };
 		C989482515BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */; };
-		C989482615BB5A29009517AA /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = C989482015BB59D0009517AA /* libz.dylib */; };
 		C989482715BB5A30009517AA /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481815BB599E009517AA /* AVFoundation.framework */; };
 		C989482815BB5A35009517AA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481615BB5999009517AA /* CoreVideo.framework */; };
 		C989482915BB5A46009517AA /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481A15BB59A3009517AA /* CoreMedia.framework */; };
@@ -82,6 +81,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0D8DB00C15BB6ED8002E1554 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		C968782615BA6901001F8D84 /* Smoke Puffs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Smoke Puffs.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C968782A15BA6901001F8D84 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C968782C15BA6901001F8D84 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -370,7 +370,6 @@
 		C989481815BB599E009517AA /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		C989481A15BB59A3009517AA /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		C989481C15BB59A8009517AA /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
-		C989482015BB59D0009517AA /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		C989482215BB5A1D009517AA /* UIImage+OpenCV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+OpenCV.h"; sourceTree = "<group>"; };
 		C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UIImage+OpenCV.mm"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -380,10 +379,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0D8DB00D15BB6ED8002E1554 /* libz.dylib in Frameworks */,
 				C989482915BB5A46009517AA /* CoreMedia.framework in Frameworks */,
 				C989482715BB5A30009517AA /* AVFoundation.framework in Frameworks */,
 				C989482815BB5A35009517AA /* CoreVideo.framework in Frameworks */,
-				C989482615BB5A29009517AA /* libz.dylib in Frameworks */,
 				C968782B15BA6901001F8D84 /* UIKit.framework in Frameworks */,
 				C968782D15BA6901001F8D84 /* Foundation.framework in Frameworks */,
 				C968782F15BA6901001F8D84 /* CoreGraphics.framework in Frameworks */,
@@ -397,7 +396,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C989482115BB59D0009517AA /* libz.dylib in Frameworks */,
 				C989481E15BB59B2009517AA /* CoreGraphics.framework in Frameworks */,
 				C989481D15BB59A8009517AA /* ImageIO.framework in Frameworks */,
 				C989481B15BB59A3009517AA /* CoreMedia.framework in Frameworks */,
@@ -417,13 +415,9 @@
 		C968781B15BA68FF001F8D84 = {
 			isa = PBXGroup;
 			children = (
-				C989482015BB59D0009517AA /* libz.dylib */,
+				0D8DB00C15BB6ED8002E1554 /* libz.dylib */,
 				C989482215BB5A1D009517AA /* UIImage+OpenCV.h */,
 				C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */,
-				C989481C15BB59A8009517AA /* ImageIO.framework */,
-				C989481A15BB59A3009517AA /* CoreMedia.framework */,
-				C989481815BB599E009517AA /* AVFoundation.framework */,
-				C989481615BB5999009517AA /* CoreVideo.framework */,
 				C968783415BA6901001F8D84 /* Smoke Puffs */,
 				C968785915BA6902001F8D84 /* Smoke PuffsTests */,
 				C968782915BA6901001F8D84 /* Frameworks */,
@@ -443,6 +437,10 @@
 		C968782915BA6901001F8D84 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				C989481C15BB59A8009517AA /* ImageIO.framework */,
+				C989481A15BB59A3009517AA /* CoreMedia.framework */,
+				C989481815BB599E009517AA /* AVFoundation.framework */,
+				C989481615BB5999009517AA /* CoreVideo.framework */,
 				C989481415BB597F009517AA /* OpenCV.framework */,
 				C989481115BB436C009517AA /* QuartzCore.framework */,
 				C968782A15BA6901001F8D84 /* UIKit.framework */,
