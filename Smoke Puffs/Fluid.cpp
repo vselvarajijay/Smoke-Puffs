@@ -17,17 +17,20 @@ Fluid::Fluid(int width, int height) {
   h_ = height;
   
   fluxes_.resize(w_*h_*2);
+  densities_.resize(w_*h_);
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
       fluxes_[fidx(0,x,y)] = 0.0f;
       fluxes_[fidx(1,x,y)] = 0.0f;
+      densities_[vidx(x,y)] = 0.0f;
     }
   }
   
   for (int x = 20; x < 30; ++x) {
     for (int y = 20; y < 30; ++y) {
       SplatCenterVelocity(x, y, Eigen::Vector2f(12.0, 2.0), &fluxes_);
+      densities_[vidx(x,y)] = 1.0f;
     }
   }
   
@@ -49,32 +52,14 @@ void Fluid::Advect(float dt) {
     for (int y = 0; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      int sx = static_cast<int>(source[0]);
-      int sy = static_cast<int>(source[1] - 0.5f);
-      float fx = source[0] - sx;
-      float fy = source[1] - 0.5f - sy;
-      int lx = std::max(1, sx);
-      int ly = std::max(1, sy);
-      int hx = std::min(w_-1, sx+1);
-      int hy = std::min(h_-1, sy+1);
-      new_fluxes[fidx(0,x,y)] = (1.0f-fx)*(1.0-fy)*fluxes_[fidx(0,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(0,lx,hy)] +
-                                 fx*(1.0-fy)*fluxes_[fidx(0,hx,ly)] + fx*fy*fluxes_[fidx(0,hx,hy)];
+      new_fluxes[fidx(0,x,y)] = InterpolateXVelocity(source);
     }
   }
   for (int x = 0; x < w_; ++x) {
     for (int y = 1; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      int sx = static_cast<int>(source[0] - 0.5f);
-      int sy = static_cast<int>(source[1]);
-      float fx = source[0]  - 0.5f - sx;
-      float fy = source[1] - sy;
-      int lx = std::max(1, sx);
-      int ly = std::max(1, sy);
-      int hx = std::min(w_-1, sx+1);
-      int hy = std::min(h_-1, sy+1);
-      new_fluxes[fidx(1,x,y)] = (1.0f-fx)*(1.0-fy)*fluxes_[fidx(1,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(1,lx,hy)] +
-                                 fx*(1.0-fy)*fluxes_[fidx(1,hx,ly)] + fx*fy*fluxes_[fidx(1,hx,hy)];
+      new_fluxes[fidx(1,x,y)] = InterpolateYVelocity(source);
     }
   }
   fluxes_.swap(new_fluxes);
@@ -83,6 +68,7 @@ void Fluid::Advect(float dt) {
 void Fluid::Project() {
   std::vector<float> pressure(w_ * h_);
   std::vector<float> div(w_ * h_);
+  // For faster SOR convergence.
   const float omega = 1.2f;
   
   for (int x = 0; x < w_; ++x) {
@@ -97,7 +83,8 @@ void Fluid::Project() {
     }
   }
   
-  for (int k = 0; k < 20; ++k) {
+  const int MAX_ITERS = 20;
+  for (int k = 0; k < MAX_ITERS; ++k) {
     float err = 0.0f;
     for (int x = 0; x < w_; ++x) {
       for (int y = 0; y < h_; ++y) {
@@ -159,6 +146,17 @@ void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
   }
 }
 
+void Fluid::GetDensities(std::vector<float>* densities) {
+  densities->clear();
+  densities->reserve(densities_.size());
+  for (int y = 0; y < h_; ++y) {
+    for (int x= 0; x < w_; ++x) {
+      densities->push_back(densities_[vidx(x,y)]);
+    }
+  }
+}
+
+
 void Fluid::AddImpulse(float x0, float y0, float dx, float dy) {
   pending_impulse_origins_.push_back(Eigen::Vector2f(x0, y0));
   pending_impulse_deltas_.push_back(Eigen::Vector2f(dx*50.0, dy*50.0));
@@ -188,5 +186,11 @@ void Fluid::ApplyImpulses() {
 }
 
 void Fluid::AdvectDensity(float dt) {
-  
+  for (int x = 0; x < w_; ++x) {
+    for (int y = 0; y < h_; ++y) {
+      const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
+      const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*InterpolateVelocity(ClipPoint(mid_source));
+      densities_[vidx(x,y)] = InterpolateDensity(source);
+    }
+  }
 }

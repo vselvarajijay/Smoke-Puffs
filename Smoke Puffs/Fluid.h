@@ -28,6 +28,7 @@ class Fluid {
                   float dx, float dy);
   
   void GetLines(std::vector<float>* line_coords, float scale);
+  void GetDensities(std::vector<float>* densities);
   
   void Step(double dt) {
     //ApplyImpulses();
@@ -47,14 +48,8 @@ class Fluid {
     return Eigen::Vector2f(Clip(src[0], 0.0f, w_+1.0f), Clip(src[1], 0.0f, h_+1.0f));
   }
   
-  inline int fidx(int axis, int x, int y) { int res = axis * w_ * h_ + x * h_ + y;
-    assert(res < fluxes_.size());
-    assert(res >= 0);
-    return res; }
-  inline int vidx(int x, int y) { int res = x * h_ + y;
-    assert(res < w_ * h_);
-    assert(res >= 0);
-    return res;}
+  inline int fidx(int axis, int x, int y) { return axis * w_ * h_ + x * h_ + y; }
+  inline int vidx(int x, int y) { return x * h_ + y; }
   inline float InterpolateXVelocity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0]);
     int sy = static_cast<int>(source[1] - 0.5f);
@@ -79,6 +74,18 @@ class Fluid {
     return (1.0f-fx)*(1.0-fy)*fluxes_[fidx(1,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(1,lx,hy)] +
     fx*(1.0-fy)*fluxes_[fidx(1,hx,ly)] + fx*fy*fluxes_[fidx(1,hx,hy)];
   }
+  inline float InterpolateDensity(const Eigen::Vector2f& source) {
+    int sx = static_cast<int>(source[0] - 0.5f);
+    int sy = static_cast<int>(source[1] - 0.5f);
+    float fx = source[0] - 0.5f - sx;
+    float fy = source[1] - 0.5f - sy;
+    int lx = std::max(1, sx);
+    int ly = std::max(1, sy);
+    int hx = std::min(w_-1, sx+1);
+    int hy = std::min(h_-1, sy+1);
+    return (1.0f-fx)*(1.0-fy)*densities_[vidx(lx,ly)] + (1.0-fx)*fy*densities_[vidx(lx,hy)] +
+    fx*(1.0-fy)*densities_[vidx(hx,ly)] + fx*fy*densities_[vidx(hx,hy)];
+  }
   inline Eigen::Vector2f InterpolateVelocity(const Eigen::Vector2f& source) {
     return Eigen::Vector2f(InterpolateXVelocity(source), InterpolateYVelocity(source));
   }
@@ -101,7 +108,7 @@ class Fluid {
   }
 
   std::vector<float> fluxes_;
-  std::vector<float> density_;
+  std::vector<float> densities_;
 
   std::vector<Eigen::Vector2f> pending_impulse_origins_;
   std::vector<Eigen::Vector2f> pending_impulse_deltas_;
