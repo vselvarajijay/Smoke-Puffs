@@ -31,7 +31,7 @@ class Fluid {
   void GetLines(std::vector<float>* line_coords, float scale);
   
   void Step(double dt) {
-    ApplyImpulses();
+    //ApplyImpulses();
     Advect(dt);
     Project();
   }

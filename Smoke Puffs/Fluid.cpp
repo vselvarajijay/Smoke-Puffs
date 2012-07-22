@@ -19,19 +19,19 @@ Fluid::Fluid(int width, int height) {
   h_ = height;
   
   fluxes_.resize(w_*h_*2);
+  vels_.clear();
   vels_.resize(w_*h_);
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      //vels_[vidx(x,y)] = Eigen::Vector2f(static_cast<float>(x) / w_, static_cast<float>(y) / h_);
-      //vels_[vidx(x,y)] = Eigen::Vector2f(0.0, 2.0);
+      vels_[vidx(x,y)] = Eigen::Vector2f(0.0, 0.0);
     }
   }
   
   for (int x = 10; x < 20; ++x) {
     for (int y = 10; y < 20; ++y) {
       //vels_[vidx(x,y)] = Eigen::Vector2f(static_cast<float>(x) / w_, static_cast<float>(y) / h_);
-      vels_[vidx(x,y)] = Eigen::Vector2f(4.0, 0.0);
+      vels_[vidx(x,y)] = Eigen::Vector2f(12.0, 0.0);
     }
   }
   
@@ -86,23 +86,7 @@ void Fluid::Advect(float dt) {
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
       const int here = vidx(x,y);
-      const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5, y + 0.5) - dt*0.5*vels_[here];
-      const float rx = floorf(source[0] - 0.5);
-      const float ry = floorf(source[1] - 0.5);
-      const int lx = static_cast<int>(rx);
-      const int ly = static_cast<int>(ry);
-      const double fx = source[0] - rx - 0.5;
-      const double fy = source[1] - ry - 0.5;
-      new_vels[here] = ((1.0f-fy) * (vels_[vidx(lx,ly)]*(1.0f-fx) + vels_[vidx(lx+1, ly)]*fx) +
-                        fy * (vels_[vidx(lx,ly+1)]*(1.0f-fx) + vels_[vidx(lx+1, ly+1)]*fx));
-    }
-  }
-
-  vels_.swap(new_vels);
-
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      const int here = vidx(x,y);
+      //const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5, y + 0.5) - dt*0.5*vels_[here];
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5, y + 0.5) - dt*vels_[here];
       const float rx = floorf(source[0] - 0.5);
       const float ry = floorf(source[1] - 0.5);
@@ -114,7 +98,7 @@ void Fluid::Advect(float dt) {
                         fy * (vels_[vidx(lx,ly+1)]*(1.0f-fx) + vels_[vidx(lx+1, ly+1)]*fx));
     }
   }
-  
+
   vels_.swap(new_vels);
   
   SetFluxesFromVelocities();
@@ -191,6 +175,7 @@ void Fluid::AddImpulse(float x0, float y0, float dx, float dy) {
 }
 
 void Fluid::ApplyImpulses() {
+  return;
   assert(pending_impulse_origins_.size() == pending_impulse_deltas_.size());
   
   for (size_t i = 0; i < pending_impulse_origins_.size(); ++i) {

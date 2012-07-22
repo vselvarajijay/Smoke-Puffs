@@ -102,7 +102,7 @@ enum
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
   
     self.width = 60;
-    self.height = 45;
+    self.height = 80;
     self.fluid = new Fluid(self.width, self.height);
     self.dt = 0.25f;
     self.ball_x = self.width * 0.5f;
@@ -165,7 +165,7 @@ enum
 	/*And we create a capture session*/
 	self.captureSession = [[AVCaptureSession alloc] init];
 	/*We add input and output*/
-	[self.captureSession addInput:captureInput];
+	//[self.captureSession addInput:captureInput];
 	[self.captureSession addOutput:captureOutput];
     /*We use medium quality, ont the iPhone 4 this demo would be laging too much, the conversion in UIImage and CGImage demands too much ressources for a 720p resolution.*/
     [self.captureSession setSessionPreset:AVCaptureSessionPresetMedium];	
