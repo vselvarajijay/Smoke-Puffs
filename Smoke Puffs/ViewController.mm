@@ -263,8 +263,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 -(void)findBlobs:(UIImage *)image {
     
     IplImage *img = [self CreateIplImageFromUIImage:image];
-
-    img = [self CreateIplImageFromUIImage:image];
     
     _lastFrame = img;
     
