@@ -276,9 +276,9 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     _lastFrame = img;
     
-  const int detect_res_x = 100;
-  const int detect_res_y = 100;
-    cv::resize(_lastFrame, _lastFrame, cv::Size(detect_res_x,detect_res_y));
+    const int detect_res_x = 50; 
+    const int detect_res_y = 50;
+    cv::resize(_lastFrame, _lastFrame, cv::Size(detect_res_y,detect_res_x));
                 
     int greens_found = 0;
     int greens_x = 0;
@@ -307,23 +307,21 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         }                    
     }    
     
-  const int detect_threshold = 4;
+  const int detect_threshold = 0;
     if(greens_found>detect_threshold){
         int x = greens_x/greens_found;
         int y = greens_y/greens_found;       
-       // cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));       
         green_x = x * (768/detect_res_x);
-        green_y = y * (1024/detect_res_y);
-        
-        green_x = 768 - green_x;
+        green_y = y * (1024/detect_res_y);        
+        green_x = 768 - green_x;        
     }
     
     if(blues_found>detect_threshold){
         int x = blues_x/blues_found;
         int y = blues_y/blues_found;        
-        red_x = x * (768/detect_res_x);
-        red_y = y * (1024/detect_res_y);        
-        red_x = 768 - red_x;        
+        red_x = x * (768/detect_res_y);
+        red_y = y * (1024/detect_res_x);               
+        red_x = 768 - red_x;
     }
     
     cvReleaseImage(&img);
@@ -433,22 +431,29 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     [touchView_g setBackgroundColor:[UIColor greenColor]];
     //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
     //touchView_g.frame = CGRectMake(green_x * (1920/100), green_y * (1080/100), 30, 30);  
-    touchView_g.frame = CGRectMake(green_y , green_x
-                                   , 30, 30);  
+    touchView_g.frame = CGRectMake(green_y , green_x, 30, 30);  
    // touchView_g.frame = CGRectMake(768/2, 1024/2 , 30, 30);  
     touchView_g.layer.cornerRadius = 15;
     [self.view addSubview:touchView_g];
     
-
-    int _gy = (1024/2) - (green_y / (1024/45));
-    _gy =  (1024/45) + _gy;
-
-    self.fluid->AddImpulse(green_x / (768/60),
-                           _gy,
-                           ((previous_green_x - green_x)/(768/60))*2,
-                           -((green_y - previous_green_y)/(1024/45))*2);
     
+   /*
+
     
+    self.fluid->AddImpulse( green_y / self.height,
+                           green_x / self.width,
+                           1,
+                           1);
+    
+    */
+    /* 
+    self.fluid->AddImpulse(green_y, green_y/self.height,
+                           1,
+                           1);
+     */
+    
+ 
+    /*
     int _ry = (1024/2) - (red_y / (1024/45));
     _ry =  (1024/45) + _ry;
     
@@ -457,6 +462,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
                            ((previous_red_x - red_x)/(768/60))*2,
                            -((red_y - previous_red_y)/(1024/45))*2);
     
+ */
     
     
     previous_green_x = green_x;
@@ -517,14 +523,14 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   glDisableVertexAttribArray(GLKVertexAttribTexCoord0);
   
   // Render the object with GLKit
-//  [self.effect prepareToDraw];
-//  std::vector<float> lines;
-//  self.fluid->GetLines(&lines, 3.0);
-//  
-//  glEnableVertexAttribArray(GLKVertexAttribPosition);
-//  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
-//  glDrawArrays(GL_LINES, 0, lines.size()/2);
-//  glDisableVertexAttribArray(GLKVertexAttribPosition);
+  [self.effect prepareToDraw];
+  std::vector<float> lines;
+  self.fluid->GetLines(&lines, 3.0);
+  
+  glEnableVertexAttribArray(GLKVertexAttribPosition);
+  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
+  glDrawArrays(GL_LINES, 0, lines.size()/2);
+  glDisableVertexAttribArray(GLKVertexAttribPosition);
 }
 
 #pragma mark -  OpenGL ES 2 shader compilation
