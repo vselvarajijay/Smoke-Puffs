@@ -68,13 +68,6 @@
 		C989482715BB5A30009517AA /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481815BB599E009517AA /* AVFoundation.framework */; };
 		C989482815BB5A35009517AA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481615BB5999009517AA /* CoreVideo.framework */; };
 		C989482915BB5A46009517AA /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481A15BB59A3009517AA /* CoreMedia.framework */; };
-		C98948B415BBB8D7009517AA /* CreateObstacles.c in Sources */ = {isa = PBXBuildFile; fileRef = C989488F15BBB8D7009517AA /* CreateObstacles.c */; };
-		C98948B515BBB8D7009517AA /* CreateProgram.m in Sources */ = {isa = PBXBuildFile; fileRef = C989489015BBB8D7009517AA /* CreateProgram.m */; };
-		C98948B615BBB8D7009517AA /* CreateQuad.c in Sources */ = {isa = PBXBuildFile; fileRef = C989489115BBB8D7009517AA /* CreateQuad.c */; };
-		C98948B715BBB8D7009517AA /* CreateSlab.c in Sources */ = {isa = PBXBuildFile; fileRef = C989489215BBB8D7009517AA /* CreateSlab.c */; };
-		C98948B815BBB8D7009517AA /* Fluid.c in Sources */ = {isa = PBXBuildFile; fileRef = C989489315BBB8D7009517AA /* Fluid.c */; };
-		C98948B915BBB8D7009517AA /* Fluid.glsl in Resources */ = {isa = PBXBuildFile; fileRef = C989489415BBB8D7009517AA /* Fluid.glsl */; };
-		C98948C615BBBDC6009517AA /* SlabOps.c in Sources */ = {isa = PBXBuildFile; fileRef = C98948C515BBBDC5009517AA /* SlabOps.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -379,14 +372,6 @@
 		C989481C15BB59A8009517AA /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
 		C989482215BB5A1D009517AA /* UIImage+OpenCV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+OpenCV.h"; sourceTree = "<group>"; };
 		C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UIImage+OpenCV.mm"; sourceTree = "<group>"; };
-		C989488F15BBB8D7009517AA /* CreateObstacles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CreateObstacles.c; sourceTree = "<group>"; };
-		C989489015BBB8D7009517AA /* CreateProgram.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = CreateProgram.m; sourceTree = "<group>"; };
-		C989489115BBB8D7009517AA /* CreateQuad.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CreateQuad.c; sourceTree = "<group>"; };
-		C989489215BBB8D7009517AA /* CreateSlab.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = CreateSlab.c; sourceTree = "<group>"; };
-		C989489315BBB8D7009517AA /* Fluid.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = Fluid.c; sourceTree = "<group>"; };
-		C989489415BBB8D7009517AA /* Fluid.glsl */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Fluid.glsl; sourceTree = "<group>"; };
-		C989489515BBB8D7009517AA /* Fluid.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Fluid.h; sourceTree = "<group>"; };
-		C98948C515BBBDC5009517AA /* SlabOps.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = SlabOps.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -471,7 +456,6 @@
 		C968783415BA6901001F8D84 /* Smoke Puffs */ = {
 			isa = PBXGroup;
 			children = (
-				C989488D15BBB870009517AA /* Fluid */,
 				C968786D15BA6E4D001F8D84 /* Eigen */,
 				C968783D15BA6901001F8D84 /* AppDelegate.h */,
 				C968783E15BA6901001F8D84 /* AppDelegate.m */,
@@ -1045,22 +1029,6 @@
 			path = UmfPackSupport;
 			sourceTree = "<group>";
 		};
-		C989488D15BBB870009517AA /* Fluid */ = {
-			isa = PBXGroup;
-			children = (
-				C989488F15BBB8D7009517AA /* CreateObstacles.c */,
-				C989489015BBB8D7009517AA /* CreateProgram.m */,
-				C989489115BBB8D7009517AA /* CreateQuad.c */,
-				C989489215BBB8D7009517AA /* CreateSlab.c */,
-				C989489315BBB8D7009517AA /* Fluid.c */,
-				C989489415BBB8D7009517AA /* Fluid.glsl */,
-				C989489515BBB8D7009517AA /* Fluid.h */,
-				C98948C515BBBDC5009517AA /* SlabOps.c */,
-			);
-			name = Fluid;
-			path = "Smoke Puffs/Fluid";
-			sourceTree = SOURCE_ROOT;
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -1172,7 +1140,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C968785E15BA6902001F8D84 /* InfoPlist.strings in Resources */,
-				C98948B915BBB8D7009517AA /* Fluid.glsl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1204,7 +1171,6 @@
 				C968784C15BA6901001F8D84 /* ViewController.mm in Sources */,
 				C968786B15BA6C14001F8D84 /* Fluid.cpp in Sources */,
 				C989482415BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */,
-				C98948C615BBBDC6009517AA /* SlabOps.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1214,11 +1180,6 @@
 			files = (
 				C968786115BA6902001F8D84 /* Smoke_PuffsTests.m in Sources */,
 				C989482515BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */,
-				C98948B415BBB8D7009517AA /* CreateObstacles.c in Sources */,
-				C98948B515BBB8D7009517AA /* CreateProgram.m in Sources */,
-				C98948B615BBB8D7009517AA /* CreateQuad.c in Sources */,
-				C98948B715BBB8D7009517AA /* CreateSlab.c in Sources */,
-				C98948B815BBB8D7009517AA /* Fluid.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
