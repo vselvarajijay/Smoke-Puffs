@@ -183,8 +183,8 @@ enum
   soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
   soccer_ball.frame = CGRectMake(0, 0, soccer_ball_size, soccer_ball_size);
   
-  goal_width = 100;
-  goal_height = 200;
+  goal_width = 150;
+  goal_height = 400;
   
   goal_left = [[UIView alloc] init];
   goal_left.frame = CGRectMake(0, 384-goal_height/2, goal_width, goal_height);
@@ -206,6 +206,7 @@ enum
   ball_wait_frames = -1;
   
   soccer_on = NO;
+  [self setupSoccer];
   
 }
 
