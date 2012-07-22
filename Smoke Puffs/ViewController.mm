@@ -120,9 +120,27 @@ enum
 
 - (void)initCapture {
 	/*We setup the input*/
-	AVCaptureDeviceInput *captureInput = [AVCaptureDeviceInput 
-										  deviceInputWithDevice:[AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo] 
-										  error:nil];
+
+    NSArray *devices = [AVCaptureDevice devices];
+    AVCaptureDeviceInput *captureInput = nil;
+    for (AVCaptureDevice *device in devices) {
+        // Get the front or the back camera
+        if (device.position == AVCaptureDevicePositionFront) {
+            captureInput = [AVCaptureDeviceInput deviceInputWithDevice:device error:nil];
+            break;
+        }
+    }
+    
+    
+	//AVCaptureDeviceInput *captureInput = [AVCaptureDeviceInput 
+	//									  deviceInputWithDevice:[AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo] 
+	//									  error:nil];
+    
+    
+
+    
+
+
 	/*We setupt the output*/
 	AVCaptureVideoDataOutput *captureOutput = [[AVCaptureVideoDataOutput alloc] init];
 	/*While a frame is processes in -captureOutput:didOutputSampleBuffer:fromConnection: delegate methods no other frames are added in the queue.
@@ -278,6 +296,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             int y = greens_y/greens_found;
             NSLog(@"Greens Found: %i, %i",x, y);
             cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));
+            green_x = x;
+            green_y = y;
         }
             
         if(blues_found>0){
@@ -285,6 +305,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             int y = blues_y/blues_found;
             NSLog(@"Blues Found: %i, %i",x, y);
             cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(255,255,255));
+            red_x = x;
+            red_y = y;
         }
     }                 
     
@@ -344,6 +366,10 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 #pragma mark - GLKView and GLKViewController delegate methods
 
+
+int green_x, green_y;
+int red_x, red_y;
+
 - (void)update
 {
   self.fluid->Step(self.dt);
@@ -356,10 +382,17 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
       
   UIView *touchView = [[UIView alloc] init];
   [touchView setBackgroundColor:[UIColor redColor]];
-  touchView.frame = CGRectMake(self.ball_x * 1024 / self.width, 768 - self.ball_y * 768 / self.height, 30, 30);
+  touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
   touchView.layer.cornerRadius = 15;
   [self.view addSubview:touchView];
-    //[self findBlobs];
+    
+    
+  UIView *touchView_g = [[UIView alloc] init]; 
+  [touchView_g setBackgroundColor:[UIColor greenColor]];
+  touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
+  touchView_g.layer.cornerRadius = 15;
+  [self.view addSubview:touchView_g];
+
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
