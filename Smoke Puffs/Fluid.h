@@ -45,7 +45,7 @@ class Fluid {
   inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
   
   inline Eigen::Vector2f ClipPoint(const Eigen::Vector2f& src) {
-    return Eigen::Vector2f(Clip(src[0], 0.0f, w_+1.0f), Clip(src[1], 0.0f, h_+1.0f));
+    return Eigen::Vector2f(Clip(src[0], 0.0f, w_+1.0f-(1e-4)), Clip(src[1], 0.0f, h_+1.0f-(1e-4)));
   }
   
   inline int fidx(int axis, int x, int y) { return axis * w_ * h_ + x * h_ + y; }
@@ -56,7 +56,7 @@ class Fluid {
     float fx = source[0] - sx;
     float fy = source[1] - 0.5f - sy;
     int lx = std::max(1, sx);
-    int ly = std::max(1, sy);
+    int ly = std::max(0, sy);
     int hx = std::min(w_-1, sx+1);
     int hy = std::min(h_-1, sy+1);
     return (1.0f-fx)*(1.0-fy)*fluxes_[fidx(0,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(0,lx,hy)] +
@@ -67,7 +67,7 @@ class Fluid {
     int sy = static_cast<int>(source[1]);
     float fx = source[0]  - 0.5f - sx;
     float fy = source[1] - sy;
-    int lx = std::max(1, sx);
+    int lx = std::max(0, sx);
     int ly = std::max(1, sy);
     int hx = std::min(w_-1, sx+1);
     int hy = std::min(h_-1, sy+1);
@@ -79,8 +79,8 @@ class Fluid {
     int sy = static_cast<int>(source[1] - 0.5f);
     float fx = source[0] - 0.5f - sx;
     float fy = source[1] - 0.5f - sy;
-    int lx = std::max(1, sx);
-    int ly = std::max(1, sy);
+    int lx = std::max(0, sx);
+    int ly = std::max(0, sy);
     int hx = std::min(w_-1, sx+1);
     int hy = std::min(h_-1, sy+1);
     return (1.0f-fx)*(1.0-fy)*densities_[vidx(lx,ly)] + (1.0-fx)*fy*densities_[vidx(lx,hy)] +
