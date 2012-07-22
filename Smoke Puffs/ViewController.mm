@@ -113,7 +113,7 @@ enum
 - (CGPoint)fluidCoordsFromScreenCoords:(CGPoint)pt
 {
   return CGPointMake(self.width / 1024.0f * pt.x,
-                     (self.height - 768.0f) * self.height / 768.0f * pt.y);
+                     (768.0f - pt.y) * self.height / 768.0f);
 }
 
 - (void)viewDidLoad
@@ -457,10 +457,26 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   green_ball.center = CGPointMake(green_y , green_x);
 
     
-    self.fluid->AddImpulse( green_y / self.height,
-                           green_x / self.width,
-                           1,
-                           1);
+  
+   
+    CGPoint green_pt = [self fluidCoordsFromScreenCoords:CGPointMake(green_y, green_x)];
+    CGPoint previous_green_pt = [self fluidCoordsFromScreenCoords:CGPointMake(previous_green_y, previous_green_x)];
+        
+    self.fluid->AddImpulse( green_pt.x,
+                           green_pt.y,
+                           green_pt.x - previous_green_pt.x,
+                           green_pt.y - previous_green_pt.y);
+    
+    
+    CGPoint red_pt = [self fluidCoordsFromScreenCoords:CGPointMake(red_y, red_x)];
+    CGPoint previous_red_pt = [self fluidCoordsFromScreenCoords:CGPointMake(previous_red_y, previous_red_x)];
+    
+    self.fluid->AddImpulse( red_pt.x,
+                           red_pt.y,
+                           red_pt.x - previous_red_pt.x,
+                           red_pt.y - previous_red_pt.y);
+
+
     
     /* 
     self.fluid->AddImpulse(green_y, green_y/self.height,
