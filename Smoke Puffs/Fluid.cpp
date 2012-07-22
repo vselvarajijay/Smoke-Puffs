@@ -52,14 +52,14 @@ void Fluid::Advect(float dt) {
     for (int y = 0; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(0,x,y)] = InterpolateXVelocity(ClipPoint(source));
+      new_fluxes[fidx(0,x,y)] = 0.996f*InterpolateXVelocity(ClipPoint(source));
     }
   }
   for (int x = 0; x < w_; ++x) {
     for (int y = 1; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(1,x,y)] = InterpolateYVelocity(ClipPoint(source));
+      new_fluxes[fidx(1,x,y)] = 0.996f*InterpolateYVelocity(ClipPoint(source));
     }
   }
   fluxes_.swap(new_fluxes);
@@ -187,7 +187,7 @@ void Fluid::ApplyImpulses() {
         int yj = y + j;
         if (yj < 0 || yj >= h_) continue;
         if (k*k + j*j > 64) continue;
-        densities_[vidx(xk,yj)] = std::max(1.0f, 3.0f / (1 + sqrtf(k*k + j*j)));
+        densities_[vidx(xk,yj)] = std::max(1.0f, 4.0f / (1 + sqrtf(k*k + j*j)));
       }
     }
   }
@@ -201,7 +201,7 @@ void Fluid::AdvectDensity(float dt) {
     for (int y = 0; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      densities_[vidx(x,y)] = 0.98f * InterpolateDensity(ClipPoint(source));
+      densities_[vidx(x,y)] = 0.985f * InterpolateDensity(ClipPoint(source));
     }
   }
 }
