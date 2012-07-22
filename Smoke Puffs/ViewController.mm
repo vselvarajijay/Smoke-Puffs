@@ -211,7 +211,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 	/*We display the result on the image view (We need to change the orientation of the image so that the video is displayed correctly).
 	 Same thing as for the CALayer we are not in the main thread so ...*/
 	UIImage *image= [UIImage imageWithCGImage:newImage scale:1.0 orientation:UIImageOrientationRight];
-	
+
     
     [self findBlobs:image];
     
@@ -226,6 +226,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 	//[pool drain];
 }
 
+// NOTE you SHOULD cvReleaseImage() for the return value when end of the code.
 - (IplImage *)CreateIplImageFromUIImage:(UIImage *)image {
     // Getting CGImage from UIImage
     CGImageRef imageRef = image.CGImage;
@@ -254,17 +255,16 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     IplImage *ret = cvCreateImage(cvGetSize(iplimage), IPL_DEPTH_8U, 3);
     cvCvtColor(iplimage, ret, CV_RGBA2BGR);
     cvReleaseImage(&iplimage);
-    
     return ret;
 }
 
 
 
 -(void)findBlobs:(UIImage *)image {
-    
+
     _lastFrame = [self CreateIplImageFromUIImage:image];
     
-    cv::resize(_lastFrame, _lastFrame, cv::Size(20,20));
+    cv::resize(_lastFrame, _lastFrame, cv::Size(100,100));
                 
     int greens_found = 0;
     int greens_x = 0;
@@ -295,23 +295,22 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     if(greens_found>0){
         int x = greens_x/greens_found;
-        int y = greens_y/greens_found;
-        NSLog(@"Greens Found: %i, %i",x, y);
-        cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));
-        NSLog(@"%i, %i",x, y);
-        green_x = x;
-        green_y = y;
+        int y = greens_y/greens_found;       
+       // cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));       
+        green_x = x * (768/100);
+        green_y = y * (1024/100);
+        
+        
     }
     
     if(blues_found>0){
         int x = blues_x/blues_found;
-        int y = blues_y/blues_found;
-        //NSLog(@"Blues Found: %i, %i",x, y);
-        cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(255,255,255));
-        red_x = x;
-        red_y = y;
+        int y = blues_y/blues_found;        
+        red_x = x * (768/100);
+        red_y = y * (1024/100);
     }
     
+
 }
 
 - (void)viewDidUnload
@@ -370,8 +369,10 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 #pragma mark - GLKView and GLKViewController delegate methods
 
 
-int green_x, green_y;
+int green_x = 768/2, green_y = 1024/2;
+int previous_green_x = 768/2, previous_green_y = 1024/2;
 int red_x, red_y;
+int previous_red_x = 768/2, previous_red_y = 1024/2;
 
 - (void)update
 {
@@ -382,22 +383,52 @@ int red_x, red_y;
   for (UIView *view in subviews) {
     [view removeFromSuperview];
   }
-      
-  UIView *touchView = [[UIView alloc] init];
-  [touchView setBackgroundColor:[UIColor redColor]];
-  //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
-  touchView.frame = CGRectMake(red_x * (1920/20), red_y * (1080/20), 30, 30);
-  touchView.layer.cornerRadius = 15;
-  [self.view addSubview:touchView];
-    
-    
-  UIView *touchView_g = [[UIView alloc] init]; 
-  [touchView_g setBackgroundColor:[UIColor greenColor]];
-  //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
-  touchView_g.frame = CGRectMake(green_x * (1920/20), green_y * (1080/20), 30, 30);  
-  touchView_g.layer.cornerRadius = 15;
-  [self.view addSubview:touchView_g];
+       
 
+    green_x = (previous_green_x + green_x) /2;
+    green_y = (previous_green_y + green_y) /2;
+        
+    red_x = (previous_red_x + red_x)/2;
+    red_y = (previous_red_y + red_y)/2;
+    
+    
+    
+    UIView *touchView = [[UIView alloc] init];
+    [touchView setBackgroundColor:[UIColor redColor]];
+    //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
+//    touchView.frame = CGRectMake(red_x * (1920/100), red_y * (1080/100), 30, 30);
+    touchView.frame = CGRectMake(red_x , red_y , 30, 30);
+    touchView.layer.cornerRadius = 15;
+    [self.view addSubview:touchView];
+    
+    
+    
+    
+    UIView *touchView_g = [[UIView alloc] init]; 
+    [touchView_g setBackgroundColor:[UIColor greenColor]];
+    //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
+    //touchView_g.frame = CGRectMake(green_x * (1920/100), green_y * (1080/100), 30, 30);  
+    touchView_g.frame = CGRectMake(green_x , green_y , 30, 30);  
+   // touchView_g.frame = CGRectMake(768/2, 1024/2 , 30, 30);  
+    touchView_g.layer.cornerRadius = 15;
+    [self.view addSubview:touchView_g];
+    
+
+    
+  /*  
+    self.fluid->AddImpulse(green_x,
+                           green_y ,
+                           (previous_green_x - green_x),
+                           -(green_y - previous_green_y));*/
+    
+    
+    
+    
+    previous_green_x = green_x;
+    previous_green_y = green_y;
+
+    previous_red_x = red_x;
+    previous_red_y = red_y;
 }
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
