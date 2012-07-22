@@ -66,6 +66,14 @@ enum
   UIView* goal_right;
   UIImageView* soccer_ball;
   int ball_size;
+  int soccer_ball_size;
+  int goal_height;
+  int goal_width;
+  int points_left;
+  int points_right;
+  UILabel* score_label;
+  
+  BOOL soccer_on;
 }
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) GLKBaseEffect *effect;
@@ -89,6 +97,9 @@ enum
 - (BOOL)validateProgram:(GLuint)prog;
 - (CGPoint)screenCoordsFromFluidCoords:(CGPoint)pt;
 - (CGPoint)fluidCoordsFromScreenCoords:(CGPoint)pt;
+
+-(void)setupSoccer;
+-(void)tearDownSoccer;
 @end
 
 @implementation ViewController
@@ -143,7 +154,8 @@ enum
     [self setupGL];
     [self.view setMultipleTouchEnabled:YES];
   
-  ball_size = 40;
+  ball_size = 30;
+  soccer_ball_size = 40;
         
   red_ball = [[UIView alloc] init];
   [red_ball setBackgroundColor:[UIColor redColor]];
@@ -158,15 +170,53 @@ enum
   [self.view addSubview:green_ball];
   
   soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
-  soccer_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
-  //soccer_ball.layer.cornerRadius = ball_size/2;
-  [self.view addSubview:soccer_ball];
+  soccer_ball.frame = CGRectMake(0, 0, soccer_ball_size, soccer_ball_size);
+  
+  goal_width = 100;
+  goal_height = 200;
   
   goal_left = [[UIView alloc] init];
-  goal_left.frame = CGRectMake(0, 384-60, 60, 120);
-  //goal_left.
+  goal_left.frame = CGRectMake(0, 384-goal_height/2, goal_width, goal_height);
+  goal_left.layer.borderWidth = 10.0f;
+  goal_left.layer.borderColor = [[UIColor blackColor] CGColor];
+  
+  
+  goal_right = [[UIView alloc] init];
+  goal_right.frame = CGRectMake(1024 - goal_width, 384-goal_height/2, goal_width, goal_height);
+  goal_right.layer.borderWidth = 10.0f;
+  goal_right.layer.borderColor = [[UIColor blackColor] CGColor];
+  
+  score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(512.0f, 0.0f, 400.0, 100.0) ];
+  score_label.textAlignment =  UITextAlignmentCenter;
+  score_label.textColor = [UIColor blackColor];
+  score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(48.0)];
+  
+  [self setupSoccer];
+  
 }
 
+
+- (void)setupSoccer {
+  [self.view addSubview:soccer_ball];
+  [self.view addSubview:goal_left];
+  [self.view addSubview:goal_right];
+  
+  points_left = 0;
+  points_right = 0;
+  soccer_ball.center = CGPointMake(self.width/2.0, self.height/2.0);
+  [self.view addSubview:score_label];
+  score_label.text = [NSString stringWithFormat: @"%d : %d", points_left, points_right];
+  soccer_on = YES;
+}
+
+- (void)tearDownSoccer {
+  [soccer_ball removeFromSuperview];
+  [goal_left removeFromSuperview];
+  [goal_right removeFromSuperview];
+  [score_label removeFromSuperview];
+  
+  soccer_on = NO;
+}
 
 - (void)initCapture {
 	/*We setup the input*/
@@ -434,7 +484,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 {
   self.fluid->Step(self.dt);
   self.fluid->AdvectPoint(self.dt, self.ball_x, self.ball_y, &_ball_x, &_ball_y);
-  float ball_r = ball_size / 2.0f * self.width / 1024.0f;
+  float ball_r = soccer_ball_size / 2.0f * self.width / 1024.0f;
   self.ball_x = std::max(ball_r, self.ball_x);
   self.ball_x = std::min(self.width - ball_r, self.ball_x);
   self.ball_y = std::max(ball_r, self.ball_y);
@@ -555,14 +605,14 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   glDisableVertexAttribArray(GLKVertexAttribTexCoord0);
   
   // Render the object with GLKit
-  [self.effect prepareToDraw];
-  std::vector<float> lines;
-  self.fluid->GetLines(&lines, 3.0);
-  
-  glEnableVertexAttribArray(GLKVertexAttribPosition);
-  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
-  glDrawArrays(GL_LINES, 0, lines.size()/2);
-  glDisableVertexAttribArray(GLKVertexAttribPosition);
+//  [self.effect prepareToDraw];
+//  std::vector<float> lines;
+//  self.fluid->GetLines(&lines, 3.0);
+//  
+//  glEnableVertexAttribArray(GLKVertexAttribPosition);
+//  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
+//  glDrawArrays(GL_LINES, 0, lines.size()/2);
+//  glDisableVertexAttribArray(GLKVertexAttribPosition);
 }
 
 #pragma mark -  OpenGL ES 2 shader compilation
@@ -744,7 +794,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 //  for (UIView *view in subviews) {
 //    [view removeFromSuperview];
 //  }
-  
+
   // Enumerate over all the touches and draw a red dot on the screen where the touches were
   [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
     // Get a single touch and it's location
