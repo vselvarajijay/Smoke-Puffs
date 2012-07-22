@@ -62,6 +62,8 @@ enum
   
   UIView* red_ball;
   UIView* green_ball;
+  UIView* goal_left;
+  UIView* goal_right;
   UIImageView* soccer_ball;
   int ball_size;
 }
@@ -85,6 +87,8 @@ enum
 - (BOOL)compileShader:(GLuint *)shader type:(GLenum)type file:(NSString *)file;
 - (BOOL)linkProgram:(GLuint)prog;
 - (BOOL)validateProgram:(GLuint)prog;
+- (CGPoint)screenCoordsFromFluidCoords:(CGPoint)pt;
+- (CGPoint)fluidCoordsFromScreenCoords:(CGPoint)pt;
 @end
 
 @implementation ViewController
@@ -99,6 +103,18 @@ enum
 @synthesize dt = _dt;
 @synthesize ball_x = _ball_x;
 @synthesize ball_y = _ball_y;
+
+- (CGPoint)screenCoordsFromFluidCoords:(CGPoint)pt
+{
+  return CGPointMake(1024.0f / self.width * pt.x,
+                     768.0f - 768.0f / self.height * pt.y);
+}
+
+- (CGPoint)fluidCoordsFromScreenCoords:(CGPoint)pt
+{
+  return CGPointMake(self.width / 1024.0f * pt.x,
+                     (self.height - 768.0f) * self.height / 768.0f * pt.y);
+}
 
 - (void)viewDidLoad
 {
@@ -145,6 +161,10 @@ enum
   soccer_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
   //soccer_ball.layer.cornerRadius = ball_size/2;
   [self.view addSubview:soccer_ball];
+  
+  goal_left = [[UIView alloc] init];
+  goal_left.frame = CGRectMake(0, 384-60, 60, 120);
+  //goal_left.
 }
 
 
@@ -432,7 +452,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     red_x = (previous_red_x + red_x)/2;
     red_y = (previous_red_y + red_y)/2;
     
-  soccer_ball.center = CGPointMake(self.ball_x * 1024.0f / self.width, 768.0f - self.ball_y * 768.0f / self.height);
+  soccer_ball.center = [self screenCoordsFromFluidCoords:CGPointMake(self.ball_x, self.ball_y)];
   red_ball.center = CGPointMake(red_y , red_x);
   green_ball.center = CGPointMake(green_y , green_x);
 
