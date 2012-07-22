@@ -31,7 +31,7 @@ class Fluid {
   void GetDensities(std::vector<float>* densities);
   
   void Step(double dt) {
-    //ApplyImpulses();
+    ApplyImpulses();
     Advect(dt);
     Project();
     AdvectDensity(dt);

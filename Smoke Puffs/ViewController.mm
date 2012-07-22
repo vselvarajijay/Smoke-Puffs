@@ -20,10 +20,12 @@ enum
 {
     UNIFORM_MODELVIEWPROJECTION_MATRIX,
     UNIFORM_NORMAL_MATRIX,
+    UNIFORM_SAMPLER,
     NUM_UNIFORMS
 };
 GLint uniforms[NUM_UNIFORMS];
 
+#if 0
 // Attribute index.
 enum
 {
@@ -31,6 +33,7 @@ enum
     ATTRIB_NORMAL,
     NUM_ATTRIBUTES
 };
+#endif
 
 @interface ViewController () {
   GLuint _program;
@@ -51,6 +54,9 @@ enum
   
   float _ball_x;
   float _ball_y;
+  
+  GLint sampler;
+  GLuint density_texture;
 }
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) GLKBaseEffect *effect;
@@ -454,13 +460,49 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 
   self.effect.transform.projectionMatrix = GLKMatrix4MakeOrtho(0, self.width, 0, self.height, 1, -1);
   self.effect.transform.modelviewMatrix = GLKMatrix4Identity;
-    
+  
+  // Use the program object
+  glUseProgram ( _program );
+  
+  float drawrect[] = {
+    0.0, 0.0, 0.0, 0.0,
+    self.width, 0.0, 1.0, 0.0,
+    0.0, self.height, 0.0, 1.0,
+    self.width, self.height, 1.0, 1.0
+  };
+  GLushort indices[] = {0, 1, 2, 2, 3, 1};
+  
+  // Load the vertex position
+  glVertexAttribPointer ( GLKVertexAttribPosition, 2, GL_FLOAT, 
+                         GL_FALSE, 4 * sizeof(GLfloat), drawrect );
+  // Load the texture coordinate
+  glVertexAttribPointer ( GLKVertexAttribTexCoord0, 2, GL_FLOAT,
+                         GL_FALSE, 4 * sizeof(GLfloat), &drawrect[2] );
+  
+  glEnableVertexAttribArray ( GLKVertexAttribPosition );
+  glEnableVertexAttribArray (GLKVertexAttribTexCoord0 );
+  
+  // Bind the texture
+  glActiveTexture ( GL_TEXTURE0 );
+  glBindTexture ( GL_TEXTURE_2D, density_texture );
+  std::vector<float> density;
+  self.fluid->GetDensities(&density);
+  glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, self.width, self.height, GL_LUMINANCE, GL_FLOAT, &density[0]);
+  
+  // Set the sampler texture unit to 0
+  glUniform1i ( uniforms[UNIFORM_SAMPLER], 0 );
+  glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, GL_FALSE, self.effect.transform.projectionMatrix.m);
+  
+  glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
+  glDisableVertexAttribArray(GLKVertexAttribPosition);
+  glDisableVertexAttribArray(GLKVertexAttribTexCoord0);
+  
   // Render the object with GLKit
   [self.effect prepareToDraw];
-
+  
   glEnableVertexAttribArray(GLKVertexAttribPosition);
   glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
-  glDrawArrays(GL_LINES, 0, lines.size()/2);
+  //glDrawArrays(GL_LINES, 0, lines.size()/2);
   glDisableVertexAttribArray(GLKVertexAttribPosition);
 }
 
@@ -496,8 +538,8 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     
     // Bind attribute locations.
     // This needs to be done prior to linking.
-    glBindAttribLocation(_program, ATTRIB_VERTEX, "position");
-    glBindAttribLocation(_program, ATTRIB_NORMAL, "normal");
+    glBindAttribLocation(_program, GLKVertexAttribPosition, "position");
+    glBindAttribLocation(_program, GLKVertexAttribTexCoord0, "a_texCoord");
     
     // Link program.
     if (![self linkProgram:_program]) {
@@ -522,6 +564,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     // Get uniform locations.
     uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_program, "modelViewProjectionMatrix");
     uniforms[UNIFORM_NORMAL_MATRIX] = glGetUniformLocation(_program, "normalMatrix");
+    uniforms[UNIFORM_SAMPLER] = glGetUniformLocation(_program, "s_texture");
     
     // Release vertex and fragment shaders.
     if (vertShader) {
@@ -567,6 +610,24 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
         glDeleteShader(*shader);
         return NO;
     }
+  
+  // Generate a texture object
+  glGenTextures ( 1, &density_texture );
+  
+  // Bind the texture object
+  glBindTexture ( GL_TEXTURE_2D, density_texture );
+  
+  std::vector<float> density;
+  self.fluid->GetDensities(&density);
+  // Load the texture
+  glTexImage2D ( GL_TEXTURE_2D, 0, GL_LUMINANCE, self.width, self.height, 0, GL_LUMINANCE, GL_FLOAT, &density[0] );
+  
+  // Set the filtering mode
+  glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+  glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
     
     return YES;
 }

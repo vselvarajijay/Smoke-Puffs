@@ -179,6 +179,17 @@ void Fluid::ApplyImpulses() {
     fluxes_[fidx(0,x+1,y)] += fx * delta[0];
     fluxes_[fidx(1,x,y)] += (1.0f-fy) * delta[1];
     fluxes_[fidx(1,x,y+1)] += fy * delta[1];
+    
+    for (int i = -5; i < 6; ++i) {
+      for (int j = -5; j < 6; ++j) {
+        int xi = x + i;
+        if (xi < 0 || xi >= w_) continue;
+        int yj = y + j;
+        if (yj < 0 || yj >= h_) continue;
+        if (i*i + j*j > 25) continue;
+        densities_[vidx(xi,yj)] = 1.0 / (1 + i*i + j*j);
+      }
+    }
   }
   
   pending_impulse_origins_.clear();
