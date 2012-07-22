@@ -59,6 +59,11 @@ enum
   
   GLint sampler;
   GLuint density_texture;
+  
+  UIView* red_ball;
+  UIView* green_ball;
+  UIImageView* soccer_ball;
+  int ball_size;
 }
 @property (strong, nonatomic) EAGLContext *context;
 @property (strong, nonatomic) GLKBaseEffect *effect;
@@ -121,8 +126,25 @@ enum
        
     [self setupGL];
     [self.view setMultipleTouchEnabled:YES];
+  
+  ball_size = 40;
         
-    
+  red_ball = [[UIView alloc] init];
+  [red_ball setBackgroundColor:[UIColor redColor]];
+  red_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
+  red_ball.layer.cornerRadius = ball_size/2;
+  [self.view addSubview:red_ball];
+  
+  green_ball = [[UIView alloc] init];
+  [green_ball setBackgroundColor:[UIColor greenColor]];
+  green_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
+  green_ball.layer.cornerRadius = ball_size/2;
+  [self.view addSubview:green_ball];
+  
+  soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
+  soccer_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
+  //soccer_ball.layer.cornerRadius = ball_size/2;
+  [self.view addSubview:soccer_ball];
 }
 
 
@@ -394,11 +416,16 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 {
   self.fluid->Step(self.dt);
   self.fluid->AdvectPoint(self.dt, self.ball_x, self.ball_y, &_ball_x, &_ball_y);
+  float ball_r = ball_size / 2.0f * self.width / 1024.0f;
+  self.ball_x = std::max(ball_r, self.ball_x);
+  self.ball_x = std::min(self.width - ball_r, self.ball_x);
+  self.ball_y = std::max(ball_r, self.ball_y);
+  self.ball_y = std::min(self.height - ball_r, self.ball_y);
   
-  NSArray *subviews = [self.view subviews];
-  for (UIView *view in subviews) {
-    [view removeFromSuperview];
-  }
+//  NSArray *subviews = [self.view subviews];
+//  for (UIView *view in subviews) {
+//    [view removeFromSuperview];
+//  }
        
 
     green_x = (previous_green_x + green_x) /2;
@@ -407,38 +434,9 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     red_x = (previous_red_x + red_x)/2;
     red_y = (previous_red_y + red_y)/2;
     
-    
-    
-  UIView *ballView = [[UIView alloc] init];
-  [ballView setBackgroundColor:[UIColor blackColor]];
-  //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
-  //    touchView.frame = CGRectMake(red_x * (1920/100), red_y * (1080/100), 30, 30);
-  ballView.frame = CGRectMake(self.ball_x * 1024 / self.width , 768 - self.ball_y * 768 / self.height , 30, 30);
-  ballView.layer.cornerRadius = 15;
-  [self.view addSubview:ballView];
-    
-    
-    UIView *touchView = [[UIView alloc] init];
-    [touchView setBackgroundColor:[UIColor redColor]];
-    //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
-//    touchView.frame = CGRectMake(red_x * (1920/100), red_y * (1080/100), 30, 30);
-    touchView.frame = CGRectMake(red_y , red_x , 30, 30);
-    touchView.layer.cornerRadius = 15;
-    [self.view addSubview:touchView];
-    
-    
-    
-    
-    UIView *touchView_g = [[UIView alloc] init]; 
-    [touchView_g setBackgroundColor:[UIColor greenColor]];
-    //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
-    //touchView_g.frame = CGRectMake(green_x * (1920/100), green_y * (1080/100), 30, 30);  
-    touchView_g.frame = CGRectMake(green_y , green_x
-                                   , 30, 30);  
-   // touchView_g.frame = CGRectMake(768/2, 1024/2 , 30, 30);  
-    touchView_g.layer.cornerRadius = 15;
-    [self.view addSubview:touchView_g];
-    
+  soccer_ball.center = CGPointMake(self.ball_x * 1024.0f / self.width, 768.0f - self.ball_y * 768.0f / self.height);
+  red_ball.center = CGPointMake(red_x, red_y);
+  green_ball.center = CGPointMake(green_x, green_y);
 
     int _gy = (1024/2) - (green_y / (1024/45));
     _gy =  (1024/45) + _gy;
@@ -472,7 +470,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
-  glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
+  glClearColor(0.3f, 0.3f, 0.6f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
   self.effect.transform.projectionMatrix = GLKMatrix4MakeOrtho(0, self.width, 0, self.height, 1, -1);
