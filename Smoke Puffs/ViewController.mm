@@ -186,9 +186,10 @@ enum
   goal_right.layer.borderWidth = 10.0f;
   goal_right.layer.borderColor = [[UIColor blackColor] CGColor];
   
-  score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(512.0f, 0.0f, 400.0, 100.0) ];
+  score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(300.0f, 0.0f, 400.0f, 100.0) ];
   score_label.textAlignment =  UITextAlignmentCenter;
   score_label.textColor = [UIColor blackColor];
+  score_label.backgroundColor = [UIColor clearColor];
   score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(48.0)];
   
   [self setupSoccer];
