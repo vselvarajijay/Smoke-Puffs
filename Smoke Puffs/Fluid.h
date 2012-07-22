@@ -55,25 +55,35 @@ class Fluid {
     assert(res < w_ * h_);
     assert(res >= 0);
     return res;}
-  inline Eigen::Vector2f CellCenterVelocity(int x, int y) {
-    x = std::max(x, 1);
-    y = std::max(y, 1);
-    int hx = std::min(x+1, w_-1);
-    int hy = std::min(y+1, h_-1);
-    return Eigen::Vector2f(0.5f * fluxes_[fidx(0,x,y)] + 0.5f * fluxes_[fidx(0,hx,y)],
-                           0.5f * fluxes_[fidx(1,x,y)] + 0.5f * fluxes_[fidx(1,x,hy)]);
+  inline float InterpolateXVelocity(const Eigen::Vector2f& source) {
+    int sx = static_cast<int>(source[0]);
+    int sy = static_cast<int>(source[1] - 0.5f);
+    float fx = source[0] - sx;
+    float fy = source[1] - 0.5f - sy;
+    int lx = std::max(1, sx);
+    int ly = std::max(1, sy);
+    int hx = std::min(w_-1, sx+1);
+    int hy = std::min(h_-1, sy+1);
+    return (1.0f-fx)*(1.0-fy)*fluxes_[fidx(0,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(0,lx,hy)] +
+    fx*(1.0-fy)*fluxes_[fidx(0,hx,ly)] + fx*fy*fluxes_[fidx(0,hx,hy)];
   }
-  inline Eigen::Vector2f InterpolateVelocity(const Eigen::Vector2f& pos) {
-    int x = static_cast<int>(floor(pos[0]));
-    int y = static_cast<int>(floor(pos[1]));
-    float fx = pos[0] - x;
-    float fy = pos[1] - y;
-    int lx = std::max(x, 1);
-    int ly = std::max(y, 1);
-    int hx = std::min(x+1, w_-1);
-    int hy = std::min(y+1, h_-1);
-    return Eigen::Vector2f((1.0f-fx) * fluxes_[fidx(0,lx,ly)] + fx * fluxes_[fidx(0,hx,ly)],
-                           (1.0f-fy) * fluxes_[fidx(1,lx,ly)] + fy * fluxes_[fidx(1,lx,hy)]);
+  inline float InterpolateYVelocity(const Eigen::Vector2f& source) {
+    int sx = static_cast<int>(source[0] - 0.5f);
+    int sy = static_cast<int>(source[1]);
+    float fx = source[0]  - 0.5f - sx;
+    float fy = source[1] - sy;
+    int lx = std::max(1, sx);
+    int ly = std::max(1, sy);
+    int hx = std::min(w_-1, sx+1);
+    int hy = std::min(h_-1, sy+1);
+    return (1.0f-fx)*(1.0-fy)*fluxes_[fidx(1,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(1,lx,hy)] +
+    fx*(1.0-fy)*fluxes_[fidx(1,hx,ly)] + fx*fy*fluxes_[fidx(1,hx,hy)];
+  }
+  inline Eigen::Vector2f InterpolateVelocity(const Eigen::Vector2f& source) {
+    return Eigen::Vector2f(InterpolateXVelocity(source), InterpolateYVelocity(source));
+  }
+  inline Eigen::Vector2f CellCenterVelocity(int x, int y) {
+    return InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
   }
   inline void SplatCenterVelocity(int x, int y,
                                   const Eigen::Vector2f& vel,

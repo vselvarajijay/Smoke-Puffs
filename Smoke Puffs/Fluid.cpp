@@ -18,9 +18,16 @@ Fluid::Fluid(int width, int height) {
   
   fluxes_.resize(w_*h_*2);
   
+  for (int x = 0; x < w_; ++x) {
+    for (int y = 0; y < h_; ++y) {
+      fluxes_[fidx(0,x,y)] = 0.0f;
+      fluxes_[fidx(1,x,y)] = 0.0f;
+    }
+  }
+  
   for (int x = 20; x < 30; ++x) {
     for (int y = 20; y < 30; ++y) {
-      SplatCenterVelocity(x, y, Eigen::Vector2f(12.0, 12.0), &fluxes_);
+      SplatCenterVelocity(x, y, Eigen::Vector2f(12.0, 2.0), &fluxes_);
     }
   }
   
@@ -33,16 +40,47 @@ void Fluid::Advect(float dt) {
   std::vector<float> new_fluxes(w_ * h_ * 2);
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      const Eigen::Vector2f mid_source = ClipPoint(Eigen::Vector2f(x + 0.5, y + 0.5) - dt*0.5*CellCenterVelocity(x, y));
-      const Eigen::Vector2f source = ClipPoint(Eigen::Vector2f(x + 0.5, y + 0.5) - dt*InterpolateVelocity(mid_source));
-      SplatCenterVelocity(x, y, InterpolateVelocity(source), &new_fluxes);
+      new_fluxes[fidx(0,x,y)] = 0.0f;
+      new_fluxes[fidx(1,x,y)] = 0.0f;
+    }
+  }
+  
+  for (int x = 1; x < w_; ++x) {
+    for (int y = 0; y < h_; ++y) {
+      const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
+      const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
+      int sx = static_cast<int>(source[0]);
+      int sy = static_cast<int>(source[1] - 0.5f);
+      float fx = source[0] - sx;
+      float fy = source[1] - 0.5f - sy;
+      int lx = std::max(1, sx);
+      int ly = std::max(1, sy);
+      int hx = std::min(w_-1, sx+1);
+      int hy = std::min(h_-1, sy+1);
+      new_fluxes[fidx(0,x,y)] = (1.0f-fx)*(1.0-fy)*fluxes_[fidx(0,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(0,lx,hy)] +
+                                 fx*(1.0-fy)*fluxes_[fidx(0,hx,ly)] + fx*fy*fluxes_[fidx(0,hx,hy)];
+    }
+  }
+  for (int x = 0; x < w_; ++x) {
+    for (int y = 1; y < h_; ++y) {
+      const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
+      const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
+      int sx = static_cast<int>(source[0] - 0.5f);
+      int sy = static_cast<int>(source[1]);
+      float fx = source[0]  - 0.5f - sx;
+      float fy = source[1] - sy;
+      int lx = std::max(1, sx);
+      int ly = std::max(1, sy);
+      int hx = std::min(w_-1, sx+1);
+      int hy = std::min(h_-1, sy+1);
+      new_fluxes[fidx(1,x,y)] = (1.0f-fx)*(1.0-fy)*fluxes_[fidx(1,lx,ly)] + (1.0-fx)*fy*fluxes_[fidx(1,lx,hy)] +
+                                 fx*(1.0-fy)*fluxes_[fidx(1,hx,ly)] + fx*fy*fluxes_[fidx(1,hx,hy)];
     }
   }
   fluxes_.swap(new_fluxes);
 }
 
 void Fluid::Project() {
-  return;
   std::vector<float> pressure(w_ * h_);
   std::vector<float> div(w_ * h_);
   const float omega = 1.2f;
@@ -59,7 +97,7 @@ void Fluid::Project() {
     }
   }
   
-  for (int k = 0; k < 50; ++k) {
+  for (int k = 0; k < 20; ++k) {
     float err = 0.0f;
     for (int x = 0; x < w_; ++x) {
       for (int y = 0; y < h_; ++y) {
@@ -88,7 +126,7 @@ void Fluid::Project() {
         err += diff*diff;
       }
     }
-    std::cerr << "err: " << std::sqrt(err) << std::endl;
+    //std::cerr << "err: " << std::sqrt(err) << std::endl;
   }
   
   for (int x = 0; x < w_; ++x) {
