@@ -1301,6 +1301,7 @@
 					"$(inherited)",
 					"\"$(SRCROOT)\"",
 				);
+				GCC_OPTIMIZATION_LEVEL = 3;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Smoke Puffs/Smoke Puffs-Prefix.pch";
 				"GCC_THUMB_SUPPORT[arch=armv6]" = "";

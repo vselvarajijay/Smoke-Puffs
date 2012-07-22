@@ -107,8 +107,8 @@ enum
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
   
-    self.width = 60;
-    self.height = 80;
+    self.width = 84;
+    self.height = 108;
     self.fluid = new Fluid(self.width, self.height);
     self.dt = 0.25f;
     self.ball_x = self.width * 0.5f;
@@ -453,9 +453,12 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
   std::vector<float> lines;
-  self.fluid->GetLines(&lines, 3.0);
+  //self.fluid->GetLines(&lines, 3.0);
   
-  glClearColor(0.2f, 0.2f, 0.2f, 1.0f);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  glClearColor(0.5f, 0.5f, 0.8f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT);
 
   self.effect.transform.projectionMatrix = GLKMatrix4MakeOrtho(0, self.width, 0, self.height, 1, -1);
@@ -617,17 +620,16 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   // Bind the texture object
   glBindTexture ( GL_TEXTURE_2D, density_texture );
   
-  std::vector<float> density;
-  self.fluid->GetDensities(&density);
-  // Load the texture
-  glTexImage2D ( GL_TEXTURE_2D, 0, GL_LUMINANCE, self.width, self.height, 0, GL_LUMINANCE, GL_FLOAT, &density[0] );
-  
   // Set the filtering mode
   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
   glTexParameteri ( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
+  
+  std::vector<float> density;
+  self.fluid->GetDensities(&density);
+  // Load the texture
+  glTexImage2D ( GL_TEXTURE_2D, 0, GL_LUMINANCE, self.width, self.height, 0, GL_LUMINANCE, GL_FLOAT, &density[0] );
     
     return YES;
 }

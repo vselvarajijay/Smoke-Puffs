@@ -52,14 +52,14 @@ void Fluid::Advect(float dt) {
     for (int y = 0; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(0,x,y)] = InterpolateXVelocity(source);
+      new_fluxes[fidx(0,x,y)] = InterpolateXVelocity(ClipPoint(source));
     }
   }
   for (int x = 0; x < w_; ++x) {
     for (int y = 1; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(1,x,y)] = InterpolateYVelocity(source);
+      new_fluxes[fidx(1,x,y)] = InterpolateYVelocity(ClipPoint(source));
     }
   }
   fluxes_.swap(new_fluxes);
@@ -180,14 +180,14 @@ void Fluid::ApplyImpulses() {
     fluxes_[fidx(1,x,y)] += (1.0f-fy) * delta[1];
     fluxes_[fidx(1,x,y+1)] += fy * delta[1];
     
-    for (int i = -5; i < 6; ++i) {
-      for (int j = -5; j < 6; ++j) {
-        int xi = x + i;
-        if (xi < 0 || xi >= w_) continue;
+    for (int k = -8; k < 9; ++k) {
+      int xk = x + k;
+      if (xk < 0 || xk >= w_) continue;
+      for (int j = -8; j < 9; ++j) {
         int yj = y + j;
         if (yj < 0 || yj >= h_) continue;
-        if (i*i + j*j > 25) continue;
-        densities_[vidx(xi,yj)] = 1.0 / (1 + i*i + j*j);
+        if (k*k + j*j > 64) continue;
+        densities_[vidx(xk,yj)] = std::max(1.0f, 3.0f / (1 + sqrtf(k*k + j*j)));
       }
     }
   }
@@ -201,7 +201,7 @@ void Fluid::AdvectDensity(float dt) {
     for (int y = 0; y < h_; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      densities_[vidx(x,y)] = InterpolateDensity(source);
+      densities_[vidx(x,y)] = 0.98f * InterpolateDensity(ClipPoint(source));
     }
   }
 }
