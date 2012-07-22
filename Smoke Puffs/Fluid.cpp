@@ -110,8 +110,6 @@ void Fluid::Project() {
       if (y > 0) fluxes_[fidx(1,x,y)] -= pressure[vidx(x,y)] - pressure[vidx(x,y-1)];
     }
   }
-  
-  //FixBoundaries();
 }
 
 void Fluid::AdvectPoint(float dt, float x0, float y0, float* xf, float* yf) {
@@ -171,18 +169,20 @@ void Fluid::ApplyImpulses() {
     float fx = origin[0] - x;
     float fy = origin[1] - y;
     
-    fluxes_[fidx(0,x,y)] += (1.0f-fx) * delta[0];
-    fluxes_[fidx(0,x+1,y)] += fx * delta[0];
-    fluxes_[fidx(1,x,y)] += (1.0f-fy) * delta[1];
-    fluxes_[fidx(1,x,y+1)] += fy * delta[1];
+    if (x > 1 && x < w_-2 && y > 1 && y < h_-2) {
+      fluxes_[fidx(0,x,y)] += (1.0f-fx) * delta[0];
+      fluxes_[fidx(0,x+1,y)] += fx * delta[0];
+      fluxes_[fidx(1,x,y)] += (1.0f-fy) * delta[1];
+      fluxes_[fidx(1,x,y+1)] += fy * delta[1];
+    }
     
     for (int k = -8; k < 9; ++k) {
       int xk = x + k;
-      if (xk < 0 || xk >= w_) continue;
+      if (xk < 1 || xk >= w_ - 1) continue;
       for (int j = -8; j < 9; ++j) {
         int yj = y + j;
         if (k*k + j*j > 64) continue;
-        if (yj < 0 || yj >= h_) continue;
+        if (yj < 1 || yj >= h_ - 1) continue;
         densities_[vidx(xk,yj)] = std::max(densities_[vidx(xk, yj)], std::max(1.0f, 4.0f / (1 + sqrtf(k*k + j*j))));
       }
     }

@@ -731,7 +731,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
                            self.height - touchPoint.y * self.height / 768,
                            (touchPoint.x - previousTouchPoint.x) * self.width / 1024,
                            -(touchPoint.y - previousTouchPoint.y) * self.height / 768);
-    NSLog(@"%g %g %g %g\n", touchPoint.x, touchPoint.y, previousTouchPoint.x, previousTouchPoint.y);
+    //NSLog(@"%g %g %g %g\n", touchPoint.x, touchPoint.y, previousTouchPoint.x, previousTouchPoint.y);
   }];
 }
 
