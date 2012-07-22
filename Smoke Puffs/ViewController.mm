@@ -405,6 +405,13 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     red_x = (previous_red_x + red_x)/2;
     red_y = (previous_red_y + red_y)/2;
     
+  UIView *ballView = [[UIView alloc] init];
+  [ballView setBackgroundColor:[UIColor blackColor]];
+  //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
+  //    touchView.frame = CGRectMake(red_x * (1920/100), red_y * (1080/100), 30, 30);
+  ballView.frame = CGRectMake(self.ball_x * 1024 / self.width , 768 - self.ball_y * 768 / self.height , 30, 30);
+  ballView.layer.cornerRadius = 15;
+  [self.view addSubview:ballView];
     
     
     UIView *touchView = [[UIView alloc] init];
@@ -456,8 +463,6 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 
 - (void)glkView:(GLKView *)view drawInRect:(CGRect)rect
 {
-  std::vector<float> lines;
-  //self.fluid->GetLines(&lines, 3.0);
   
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -507,12 +512,14 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   glDisableVertexAttribArray(GLKVertexAttribTexCoord0);
   
   // Render the object with GLKit
-  [self.effect prepareToDraw];
-  
-  glEnableVertexAttribArray(GLKVertexAttribPosition);
-  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
-  //glDrawArrays(GL_LINES, 0, lines.size()/2);
-  glDisableVertexAttribArray(GLKVertexAttribPosition);
+//  [self.effect prepareToDraw];
+//  std::vector<float> lines;
+//  self.fluid->GetLines(&lines, 3.0);
+//  
+//  glEnableVertexAttribArray(GLKVertexAttribPosition);
+//  glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
+//  glDrawArrays(GL_LINES, 0, lines.size()/2);
+//  glDisableVertexAttribArray(GLKVertexAttribPosition);
 }
 
 #pragma mark -  OpenGL ES 2 shader compilation

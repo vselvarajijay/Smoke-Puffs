@@ -27,13 +27,6 @@ Fluid::Fluid(int width, int height) {
     }
   }
   
-  for (int x = 20; x < 30; ++x) {
-    for (int y = 20; y < 30; ++y) {
-      SplatCenterVelocity(x, y, Eigen::Vector2f(12.0, 2.0), &fluxes_);
-      densities_[vidx(x,y)] = 1.0f;
-    }
-  }
-  
   for (int i = 0; i < 10; ++i) {
     Project();
   }
@@ -158,6 +151,14 @@ void Fluid::AddImpulse(float x0, float y0, float dx, float dy) {
 }
 
 void Fluid::ApplyImpulses() {
+  static int call_count = 0;
+  if (call_count < 3) {
+    pending_impulse_origins_.clear();
+    pending_impulse_deltas_.clear();
+    ++call_count;
+    return;
+  }
+  
   assert(pending_impulse_origins_.size() == pending_impulse_deltas_.size());
   
   for (size_t i = 0; i < pending_impulse_origins_.size(); ++i) {
