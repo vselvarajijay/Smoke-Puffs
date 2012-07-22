@@ -20,9 +20,8 @@ class Fluid {
   //void BuildMatrices();
 
   void Advect(float dt);
-  //void Diffuse(double dt, double nu);
   void Project();
-  //void FixBoundaries();
+  void FixBoundaries();
 
   void ApplyImpulses();
   void AddImpulse(float x0, float y0,
@@ -31,35 +30,67 @@ class Fluid {
   void GetLines(std::vector<float>* line_coords, float scale);
   
   void Step(double dt) {
-    ApplyImpulses();
+    //ApplyImpulses();
     Advect(dt);
     Project();
+    AdvectDensity(dt);
   }
   
+  void AdvectDensity(float dt);
   void AdvectPoint(float dt, float x0, float y0, float* xf, float* yf);
 
  private:
-  inline int fidx(int axis, int x, int y) { return axis * w_ * h_ + ((x+w_)%w_) * h_ + (y+h_)%h_;}
-  inline int vidx(int x, int y) { return ((x+w_)%w_) * h_ + (y+h_)%h_; }
-  inline Eigen::Vector2f Interpolate(const Eigen::Vector2f& pos) {
+  inline int Clip(int x, int lower, int upper) { return std::max(lower, std::min(upper, x)); }
+  inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
+  
+  inline Eigen::Vector2f ClipPoint(const Eigen::Vector2f& src) {
+    return Eigen::Vector2f(Clip(src[0], 0.0f, w_+1.0f), Clip(src[1], 0.0f, h_+1.0f));
+  }
+  
+  inline int fidx(int axis, int x, int y) { int res = axis * w_ * h_ + x * h_ + y;
+    assert(res < fluxes_.size());
+    assert(res >= 0);
+    return res; }
+  inline int vidx(int x, int y) { int res = x * h_ + y;
+    assert(res < w_ * h_);
+    assert(res >= 0);
+    return res;}
+  inline Eigen::Vector2f CellCenterVelocity(int x, int y) {
+    x = std::max(x, 1);
+    y = std::max(y, 1);
+    int hx = std::min(x+1, w_-1);
+    int hy = std::min(y+1, h_-1);
+    return Eigen::Vector2f(0.5f * fluxes_[fidx(0,x,y)] + 0.5f * fluxes_[fidx(0,hx,y)],
+                           0.5f * fluxes_[fidx(1,x,y)] + 0.5f * fluxes_[fidx(1,x,hy)]);
+  }
+  inline Eigen::Vector2f InterpolateVelocity(const Eigen::Vector2f& pos) {
     int x = static_cast<int>(floor(pos[0]));
     int y = static_cast<int>(floor(pos[1]));
     float fx = pos[0] - x;
     float fy = pos[1] - y;
-    return Eigen::Vector2f((1.0f-fx) * fluxes_[fidx(0,x,y)] + fx * fluxes_[fidx(0,x+1,y)],
-                           (1.0f-fy) * fluxes_[fidx(1,x,y)] + fy * fluxes_[fidx(1,x,y+1)]);
+    int lx = std::max(x, 1);
+    int ly = std::max(y, 1);
+    int hx = std::min(x+1, w_-1);
+    int hy = std::min(y+1, h_-1);
+    return Eigen::Vector2f((1.0f-fx) * fluxes_[fidx(0,lx,ly)] + fx * fluxes_[fidx(0,hx,ly)],
+                           (1.0f-fy) * fluxes_[fidx(1,lx,ly)] + fy * fluxes_[fidx(1,lx,hy)]);
+  }
+  inline void SplatCenterVelocity(int x, int y,
+                                  const Eigen::Vector2f& vel,
+                                  std::vector<float>* new_fluxes) {
+    /*
+    int x = static_cast<int>(floor(pos[0]));
+    int y = static_cast<int>(floor(pos[1]));
+    float fx = pos[0] - x;
+    float fy = pos[1] - y;
+     */
+    if (x > 0) (*new_fluxes)[fidx(0, x, y)] += 0.5 * vel[0];
+    if (x < w_-1) (*new_fluxes)[fidx(0, x+1, y)] += 0.5 * vel[0];
+    if (y > 0) (*new_fluxes)[fidx(1, x, y)] += 0.5 * vel[1];
+    if (y < h_-1) (*new_fluxes)[fidx(1, x, y+1)] += 0.5 * vel[1];
   }
 
-  void SetVelocitiesFromFluxes();
-  void SetFluxesFromVelocities();
-  
-  //Eigen::SparseMatrix If_;
-  //Eigen::SparseMatrix Iv_;
-  //Eigen::SparseMatrix A_;
-  //Eigen::SparseMatrix P_;
-
-  Eigen::VectorXf fluxes_;
-  std::vector<Eigen::Vector2f> vels_;
+  std::vector<float> fluxes_;
   std::vector<float> density_;
 
   std::vector<Eigen::Vector2f> pending_impulse_origins_;

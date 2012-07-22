@@ -12,164 +12,100 @@
 #include <iostream>
 #include <vector>
 
-typedef Eigen::Triplet<double> Triplet;
-
 Fluid::Fluid(int width, int height) {
   w_ = width;
   h_ = height;
   
   fluxes_.resize(w_*h_*2);
-  vels_.resize(w_*h_);
   
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      //vels_[vidx(x,y)] = Eigen::Vector2f(static_cast<float>(x) / w_, static_cast<float>(y) / h_);
-      //vels_[vidx(x,y)] = Eigen::Vector2f(0.0, 2.0);
+  for (int x = 20; x < 30; ++x) {
+    for (int y = 20; y < 30; ++y) {
+      SplatCenterVelocity(x, y, Eigen::Vector2f(12.0, 12.0), &fluxes_);
     }
   }
-  
-  for (int x = 10; x < 20; ++x) {
-    for (int y = 10; y < 20; ++y) {
-      //vels_[vidx(x,y)] = Eigen::Vector2f(static_cast<float>(x) / w_, static_cast<float>(y) / h_);
-      vels_[vidx(x,y)] = Eigen::Vector2f(4.0, 0.0);
-    }
-  }
-  
-  SetFluxesFromVelocities();
   
   for (int i = 0; i < 10; ++i) {
     Project();
   }
 }
 
-/*
-void Fluid::BuildMatrices() {
-  std::vector<Triplet> If_triplets;
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      If_triplets.push_back(Triplet(index(0, x, y),
-                                    index(0, x-1, y),
-                                    0.5));
-      If_triplets.push_back(Triplet(index(0, x, y),
-                                    index(0, x, y),
-                                    0.5));
-      If_triplets.push_back(Triplet(index(1, x, y),
-                                    index(1, x, y-1),
-                                    0.5));
-      If_triplets.push_back(Triplet(index(1, x, y),
-                                    index(1, x, y),
-                                    0.5));
-
-      Iv_triplets.push_back(Triplet(index(0, x, y),
-                                    index(0, x+1, y),
-                                    0.5));
-      Iv_triplets.push_back(Triplet(index(0, x, y),
-                                    index(0, x, y),
-                                    0.5));
-      Iv_triplets.push_back(Triplet(index(1, x, y),
-                                    index(1, x, y+1),
-                                    0.5));
-      Iv_triplets.push_back(Triplet(index(1, x, y),
-                                    index(1, x, y),
-                                    0.5));
-
-
-    }
-  }
-}
- */
-
 void Fluid::Advect(float dt) {
-  std::vector<Eigen::Vector2f> sources(w_ * h_);
-
-  std::vector<Eigen::Vector2f> new_vels(w_ * h_);
+  std::vector<float> new_fluxes(w_ * h_ * 2);
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      const int here = vidx(x,y);
-      const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5, y + 0.5) - dt*0.5*vels_[here];
-      const float rx = floorf(source[0] - 0.5);
-      const float ry = floorf(source[1] - 0.5);
-      const int lx = static_cast<int>(rx);
-      const int ly = static_cast<int>(ry);
-      const double fx = source[0] - rx - 0.5;
-      const double fy = source[1] - ry - 0.5;
-      new_vels[here] = ((1.0f-fy) * (vels_[vidx(lx,ly)]*(1.0f-fx) + vels_[vidx(lx+1, ly)]*fx) +
-                        fy * (vels_[vidx(lx,ly+1)]*(1.0f-fx) + vels_[vidx(lx+1, ly+1)]*fx));
+      const Eigen::Vector2f mid_source = ClipPoint(Eigen::Vector2f(x + 0.5, y + 0.5) - dt*0.5*CellCenterVelocity(x, y));
+      const Eigen::Vector2f source = ClipPoint(Eigen::Vector2f(x + 0.5, y + 0.5) - dt*InterpolateVelocity(mid_source));
+      SplatCenterVelocity(x, y, InterpolateVelocity(source), &new_fluxes);
     }
   }
-
-  vels_.swap(new_vels);
-
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      const int here = vidx(x,y);
-      const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5, y + 0.5) - dt*vels_[here];
-      const float rx = floorf(source[0] - 0.5);
-      const float ry = floorf(source[1] - 0.5);
-      const int lx = static_cast<int>(rx);
-      const int ly = static_cast<int>(ry);
-      const double fx = source[0] - rx - 0.5;
-      const double fy = source[1] - ry - 0.5;
-      new_vels[here] = ((1.0f-fy) * (vels_[vidx(lx,ly)]*(1.0f-fx) + vels_[vidx(lx+1, ly)]*fx) +
-                        fy * (vels_[vidx(lx,ly+1)]*(1.0f-fx) + vels_[vidx(lx+1, ly+1)]*fx));
-    }
-  }
-  
-  vels_.swap(new_vels);
-  
-  SetFluxesFromVelocities();
+  fluxes_.swap(new_fluxes);
 }
 
 void Fluid::Project() {
+  return;
   std::vector<float> pressure(w_ * h_);
   std::vector<float> div(w_ * h_);
   const float omega = 1.2f;
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      pressure[vidx(x,y)] = fluxes_[fidx(0,x,y)] + fluxes_[fidx(1,x,y)] - fluxes_[fidx(0,x+1,y)] - fluxes_[fidx(1,x,y+1)];
-      div[vidx(x,y)] = fluxes_[fidx(0,x,y)] + fluxes_[fidx(1,x,y)] - fluxes_[fidx(0,x+1,y)] - fluxes_[fidx(1,x,y+1)];
+      int here = vidx(x, y);
+      pressure[here] = 0.0f;
+      if (x > 0) pressure[here] += fluxes_[fidx(0,x,y)];
+      if (x < w_-1) pressure[here] -= fluxes_[fidx(0,x+1,y)];
+      if (y > 0) pressure[here] += fluxes_[fidx(1,x,y)];
+      if (y < h_-1) pressure[here] -= fluxes_[fidx(1,x,y+1)];
+      div[here] = pressure[here];
     }
   }
   
-  for (int k = 0; k < 20; ++k) {
+  for (int k = 0; k < 50; ++k) {
     float err = 0.0f;
     for (int x = 0; x < w_; ++x) {
       for (int y = 0; y < h_; ++y) {
-        float diff = pressure[vidx(x,y)];
-        const float sigma = -pressure[vidx(x-1,y)] - pressure[vidx(x+1,y)] - pressure[vidx(x,y-1)] - pressure[vidx(x,y+1)];
-        pressure[vidx(x,y)] = (1.0f - omega) * pressure[vidx(x,y)] + omega * 0.25f * (div[vidx(x,y)] - sigma);
-        diff -= pressure[vidx(x,y)];
+        int here = vidx(x,y);
+        float diff = pressure[here];
+        float sigma = 0.0f;
+        float count = 0.0f;
+        if (x > 0) {
+          sigma -= pressure[vidx(x-1,y)];
+          count += 1.0f;
+        }
+        if (x < w_-1) {
+          sigma -= pressure[vidx(x+1,y)];
+          count += 1.0f;
+        }
+        if (y > 0) {
+          sigma -= pressure[vidx(x,y-1)];
+          count += 1.0f;
+        }
+        if (y < h_-1) {
+          sigma -= pressure[vidx(x,y+1)];
+          count += 1.0f;
+        }
+        pressure[here] = (1.0f - omega) * pressure[here] + omega / count * (div[here] - sigma);
+        diff -= pressure[here];
         err += diff*diff;
       }
     }
+    std::cerr << "err: " << std::sqrt(err) << std::endl;
   }
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      fluxes_[fidx(0,x,y)] -= pressure[vidx(x,y)] - pressure[vidx(x-1,y)];
-      fluxes_[fidx(1,x,y)] -= pressure[vidx(x,y)] - pressure[vidx(x,y-1)];
+      if (x > 0) fluxes_[fidx(0,x,y)] -= pressure[vidx(x,y)] - pressure[vidx(x-1,y)];
+      if (y > 0) fluxes_[fidx(1,x,y)] -= pressure[vidx(x,y)] - pressure[vidx(x,y-1)];
     }
   }
   
-  SetVelocitiesFromFluxes();
-}
-
-float Wrap(float x, float min, float max) {
-  while (x < min) {
-    x += (max - min);
-  }
-  while (x > max) {
-    x += (min - max);
-  }
-  return x;
+  //FixBoundaries();
 }
 
 void Fluid::AdvectPoint(float dt, float x0, float y0, float* xf, float* yf) {
   Eigen::Vector2f source(x0, y0);
-  Eigen::Vector2f result = source + dt * Interpolate((source + 0.5 * dt * Interpolate(source)));
-  *xf = Wrap(result[0], 0.0, w_);
-  *yf = Wrap(result[1], 0.0, h_);
+  Eigen::Vector2f result = ClipPoint(source + dt * InterpolateVelocity(ClipPoint(source + 0.5 * dt * InterpolateVelocity(source))));
+  *xf = result[0];
+  *yf = result[1];
 }
 
 void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
@@ -179,8 +115,8 @@ void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
     for (int y = 0; y < h_; ++y) {
       line_coords->push_back(x + 0.5); 
       line_coords->push_back(y + 0.5); 
-      line_coords->push_back(x + 0.5 + scale*vels_[vidx(x,y)][0]);
-      line_coords->push_back(y + 0.5 + scale*vels_[vidx(x,y)][1]);
+      line_coords->push_back(x + 0.5 + scale*CellCenterVelocity(x, y)[0]);
+      line_coords->push_back(y + 0.5 + scale*CellCenterVelocity(x, y)[1]);
     }
   }
 }
@@ -211,25 +147,8 @@ void Fluid::ApplyImpulses() {
   
   pending_impulse_origins_.clear();
   pending_impulse_deltas_.clear();
+}
+
+void Fluid::AdvectDensity(float dt) {
   
-  SetVelocitiesFromFluxes();
 }
-
-void Fluid::SetVelocitiesFromFluxes() {
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      vels_[vidx(x,y)][0] = 0.5 * (fluxes_[fidx(0, x, y)] + fluxes_[fidx(0, x+1, y)]);
-      vels_[vidx(x,y)][1] = 0.5 * (fluxes_[fidx(1, x, y)] + fluxes_[fidx(1, x, y+1)]);
-    }
-  }
-}
-
-void Fluid::SetFluxesFromVelocities() {
-  for (int x = 0; x < w_; ++x) {
-    for (int y = 0; y < h_; ++y) {
-      fluxes_[fidx(0,x,y)] = 0.5 * (vels_[vidx(x-1,y)][0] + vels_[vidx(x,y)][0]);
-      fluxes_[fidx(1,x,y)] = 0.5 * (vels_[vidx(x,y-1)][1] + vels_[vidx(x,y)][1]);
-    }
-  }
-}
-
