@@ -261,8 +261,12 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 
 -(void)findBlobs:(UIImage *)image {
+    
+    IplImage *img = [self CreateIplImageFromUIImage:image];
 
-    _lastFrame = [self CreateIplImageFromUIImage:image];
+    img = [self CreateIplImageFromUIImage:image];
+    
+    _lastFrame = img;
     
     cv::resize(_lastFrame, _lastFrame, cv::Size(100,100));
                 
@@ -310,7 +314,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         red_y = y * (1024/100);
     }
     
-
+    cvReleaseImage(&img);
 }
 
 - (void)viewDidUnload
@@ -414,13 +418,22 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     [self.view addSubview:touchView_g];
     
 
+    int _gy = (1024/2) - (green_y / (1024/45));
+    _gy =  (1024/45) + _gy;
+
+    self.fluid->AddImpulse(green_x / (768/60),
+                           _gy,
+                           ((previous_green_x - green_x)/(768/60))*2,
+                           -((green_y - previous_green_y)/(1024/45))*2);
     
-  /*  
-    self.fluid->AddImpulse(green_x,
-                           green_y ,
-                           (previous_green_x - green_x),
-                           -(green_y - previous_green_y));*/
     
+    int _ry = (1024/2) - (red_y / (1024/45));
+    _ry =  (1024/45) + _ry;
+    
+    self.fluid->AddImpulse(red_x / (768/60),
+                           _ry,
+                           ((previous_red_x - red_x)/(768/60))*2,
+                           -((red_y - previous_red_y)/(1024/45))*2);
     
     
     
