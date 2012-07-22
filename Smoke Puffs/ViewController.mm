@@ -72,6 +72,7 @@ enum
   int points_left;
   int points_right;
   UILabel* score_label;
+  int ball_wait_frames;
   
   BOOL soccer_on;
 }
@@ -100,6 +101,7 @@ enum
 
 -(void)setupSoccer;
 -(void)tearDownSoccer;
+-(void)pointScored;
 @end
 
 @implementation ViewController
@@ -125,6 +127,15 @@ enum
 {
   return CGPointMake(self.width / 1024.0f * pt.x,
                      (768.0f - pt.y) * self.height / 768.0f);
+}
+
+- (void)pointScored
+{
+  score_label.text = [NSString stringWithFormat: @"%d : %d", points_left, points_right];
+  self.ball_x = self.width / 2.0;
+  self.ball_y = self.height / 2.0;
+  ball_wait_frames = 30;
+  [soccer_ball removeFromSuperview];
 }
 
 - (void)viewDidLoad
@@ -192,7 +203,9 @@ enum
   score_label.backgroundColor = [UIColor clearColor];
   score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(48.0)];
   
-  [self setupSoccer];
+  ball_wait_frames = -1;
+  
+  soccer_on = NO;
   
 }
 
@@ -204,7 +217,9 @@ enum
   
   points_left = 0;
   points_right = 0;
-  soccer_ball.center = CGPointMake(self.width/2.0, self.height/2.0);
+  ball_wait_frames = -1;
+  self.ball_x = self.width / 2.0;
+  self.ball_y = self.height / 2.0;
   [self.view addSubview:score_label];
   score_label.text = [NSString stringWithFormat: @"%d : %d", points_left, points_right];
   soccer_on = YES;
@@ -484,26 +499,48 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
 - (void)update
 {
   self.fluid->Step(self.dt);
-  self.fluid->AdvectPoint(self.dt, self.ball_x, self.ball_y, &_ball_x, &_ball_y);
-  float ball_r = soccer_ball_size / 2.0f * self.width / 1024.0f;
-  self.ball_x = std::max(ball_r, self.ball_x);
-  self.ball_x = std::min(self.width - ball_r, self.ball_x);
-  self.ball_y = std::max(ball_r, self.ball_y);
-  self.ball_y = std::min(self.height - ball_r, self.ball_y);
   
-//  NSArray *subviews = [self.view subviews];
-//  for (UIView *view in subviews) {
-//    [view removeFromSuperview];
-//  }
-       
+  if (soccer_on) {
+    if (ball_wait_frames > 0) {
+      --ball_wait_frames;
+    } else {
+      
+      if (ball_wait_frames == 0) {
+        --ball_wait_frames;
+        [self.view addSubview:soccer_ball];
+      }
+      
+      self.fluid->AdvectPoint(self.dt, self.ball_x, self.ball_y, &_ball_x, &_ball_y);
+      float ball_r = soccer_ball_size / 2.0f * self.width / 1024.0f;
+      self.ball_x = std::max(ball_r, self.ball_x);
+      self.ball_x = std::min(self.width - ball_r, self.ball_x);
+      self.ball_y = std::max(ball_r, self.ball_y);
+      self.ball_y = std::min(self.height - ball_r, self.ball_y);
+      
+      float ball_screen_r = soccer_ball_size / 2.0f - 4.0f;
+      CGPoint ball_screen = [self screenCoordsFromFluidCoords:CGPointMake(self.ball_x, self.ball_y)];
+      if (ball_screen.y < (384.0f + goal_height/2 + ball_screen_r) && ball_screen.y > (384.0f - goal_height/2 - ball_screen_r)) {
+        if (ball_screen.x < (ball_screen_r + goal_width)) {
+          ++points_right;
+          [self pointScored];
+        }
+        if (ball_screen.x > (1024.0f - ball_screen_r - goal_width)) {
+          ++points_left;
+          [self pointScored];
+        }
+      }
+        soccer_ball.center = ball_screen;
+    }
+  }
 
-    green_x = (previous_green_x + green_x) /2;
-    green_y = (previous_green_y + green_y) /2;
-        
-    red_x = (previous_red_x + red_x)/2;
-    red_y = (previous_red_y + red_y)/2;
+
     
-  soccer_ball.center = [self screenCoordsFromFluidCoords:CGPointMake(self.ball_x, self.ball_y)];
+
+  green_x = (previous_green_x + green_x) /2;
+  green_y = (previous_green_y + green_y) /2;
+  
+  red_x = (previous_red_x + red_x)/2;
+  red_y = (previous_red_y + red_y)/2;
   red_ball.center = CGPointMake(red_y , red_x);
   green_ball.center = CGPointMake(green_y , green_x);
 
@@ -789,39 +826,49 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     return YES;
 }
 
--(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {  
-  // Remove old red circles on screen
-//  NSArray *subviews = [self.view subviews];
-//  for (UIView *view in subviews) {
-//    [view removeFromSuperview];
-//  }
-
-  // Enumerate over all the touches and draw a red dot on the screen where the touches were
-  [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
-    // Get a single touch and it's location
-    UITouch *touch = obj;
-    CGPoint touchPoint = [touch locationInView:self.view];
-    CGPoint previousTouchPoint = [touch previousLocationInView:self.view];
-    
-    // Draw a red circle where the touch occurred
-//    UIView *touchView = [[UIView alloc] init];
-//    [touchView setBackgroundColor:[UIColor redColor]];
-//    touchView.frame = CGRectMake(touchPoint.x, touchPoint.y, 30, 30);
-//    touchView.layer.cornerRadius = 15;
-//    [self.view addSubview:touchView];
+//-(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {  
+//  // Remove old red circles on screen
+////  NSArray *subviews = [self.view subviews];
+////  for (UIView *view in subviews) {
+////    [view removeFromSuperview];
+////  }
+//
+//  // Enumerate over all the touches and draw a red dot on the screen where the touches were
+//  [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
+//    // Get a single touch and it's location
+//    UITouch *touch = obj;
+//    CGPoint touchPoint = [touch locationInView:self.view];
+//    CGPoint previousTouchPoint = [touch previousLocationInView:self.view];
 //    
-//    UIView *previousTouchView = [[UIView alloc] init];
-//    [previousTouchView setBackgroundColor:[UIColor blueColor]];
-//    previousTouchView.frame = CGRectMake(previousTouchPoint.x, previousTouchPoint.y, 30, 30);
-//    previousTouchView.layer.cornerRadius = 15;
-//    [self.view addSubview:previousTouchView];
-    
-    self.fluid->AddImpulse(touchPoint.x * self.width / 1024,
-                           self.height - touchPoint.y * self.height / 768,
-                           (touchPoint.x - previousTouchPoint.x) * self.width / 1024,
-                           -(touchPoint.y - previousTouchPoint.y) * self.height / 768);
-    //NSLog(@"%g %g %g %g\n", touchPoint.x, touchPoint.y, previousTouchPoint.x, previousTouchPoint.y);
-  }];
+//    // Draw a red circle where the touch occurred
+////    UIView *touchView = [[UIView alloc] init];
+////    [touchView setBackgroundColor:[UIColor redColor]];
+////    touchView.frame = CGRectMake(touchPoint.x, touchPoint.y, 30, 30);
+////    touchView.layer.cornerRadius = 15;
+////    [self.view addSubview:touchView];
+////    
+////    UIView *previousTouchView = [[UIView alloc] init];
+////    [previousTouchView setBackgroundColor:[UIColor blueColor]];
+////    previousTouchView.frame = CGRectMake(previousTouchPoint.x, previousTouchPoint.y, 30, 30);
+////    previousTouchView.layer.cornerRadius = 15;
+////    [self.view addSubview:previousTouchView];
+//    
+//    self.fluid->AddImpulse(touchPoint.x * self.width / 1024,
+//                           self.height - touchPoint.y * self.height / 768,
+//                           (touchPoint.x - previousTouchPoint.x) * self.width / 1024,
+//                           -(touchPoint.y - previousTouchPoint.y) * self.height / 768);
+//    //NSLog(@"%g %g %g %g\n", touchPoint.x, touchPoint.y, previousTouchPoint.x, previousTouchPoint.y);
+//  }];
+//}
+
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+  if ([touches anyObject] != nil) {
+    if (soccer_on) {
+      [self tearDownSoccer];
+    } else {
+      [self setupSoccer];
+    }
+  }
 }
 
 
