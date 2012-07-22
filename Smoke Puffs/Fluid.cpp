@@ -85,35 +85,30 @@ void Fluid::Project() {
   
   const int MAX_ITERS = 20;
   for (int k = 0; k < MAX_ITERS; ++k) {
-    float err = 0.0f;
     for (int x = 0; x < w_; ++x) {
       for (int y = 0; y < h_; ++y) {
         int here = vidx(x,y);
-        float diff = pressure[here];
         float sigma = 0.0f;
         float count = 0.0f;
         if (x > 0) {
-          sigma -= pressure[vidx(x-1,y)];
+          sigma -= pressure[here-h_];
           count += 1.0f;
         }
         if (x < w_-1) {
-          sigma -= pressure[vidx(x+1,y)];
+          sigma -= pressure[here+h_];
           count += 1.0f;
         }
         if (y > 0) {
-          sigma -= pressure[vidx(x,y-1)];
+          sigma -= pressure[here-1];
           count += 1.0f;
         }
         if (y < h_-1) {
-          sigma -= pressure[vidx(x,y+1)];
+          sigma -= pressure[here+1];
           count += 1.0f;
         }
         pressure[here] = (1.0f - omega) * pressure[here] + omega / count * (div[here] - sigma);
-        diff -= pressure[here];
-        err += diff*diff;
       }
     }
-    //std::cerr << "err: " << std::sqrt(err) << std::endl;
   }
   
   for (int x = 0; x < w_; ++x) {
@@ -185,9 +180,9 @@ void Fluid::ApplyImpulses() {
       if (xk < 0 || xk >= w_) continue;
       for (int j = -8; j < 9; ++j) {
         int yj = y + j;
-        if (yj < 0 || yj >= h_) continue;
         if (k*k + j*j > 64) continue;
-        densities_[vidx(xk,yj)] = std::max(1.0f, 4.0f / (1 + sqrtf(k*k + j*j)));
+        if (yj < 0 || yj >= h_) continue;
+        densities_[vidx(xk,yj)] = std::max(densities_[vidx(xk, yj)], std::max(1.0f, 4.0f / (1 + sqrtf(k*k + j*j))));
       }
     }
   }

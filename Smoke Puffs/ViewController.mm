@@ -21,6 +21,8 @@ enum
     UNIFORM_MODELVIEWPROJECTION_MATRIX,
     UNIFORM_NORMAL_MATRIX,
     UNIFORM_SAMPLER,
+    UNIFORM_XRES,
+    UNIFORM_YRES,
     NUM_UNIFORMS
 };
 GLint uniforms[NUM_UNIFORMS];
@@ -107,8 +109,8 @@ enum
     view.context = self.context;
     view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
   
-    self.width = 84;
-    self.height = 108;
+    self.width = 108;
+    self.height = 84;
     self.fluid = new Fluid(self.width, self.height);
     self.dt = 0.25f;
     self.ball_x = self.width * 0.5f;
@@ -274,7 +276,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     _lastFrame = img;
     
-    cv::resize(_lastFrame, _lastFrame, cv::Size(100,100));
+  const int detect_res = 100;
+    cv::resize(_lastFrame, _lastFrame, cv::Size(detect_res,detect_res));
                 
     int greens_found = 0;
     int greens_x = 0;
@@ -303,21 +306,22 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         }                    
     }    
     
-    if(greens_found>0){
+  const int detect_threshold = 4;
+    if(greens_found>detect_threshold){
         int x = greens_x/greens_found;
         int y = greens_y/greens_found;       
        // cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));       
-        green_x = x * (768/100);
-        green_y = y * (1024/100);
+        green_x = x * (768/detect_res);
+        green_y = y * (1024/detect_res);
         
         
     }
     
-    if(blues_found>0){
+    if(blues_found>detect_threshold){
         int x = blues_x/blues_found;
         int y = blues_y/blues_found;        
-        red_x = x * (768/100);
-        red_y = y * (1024/100);
+        red_x = x * (768/detect_res);
+        red_y = y * (1024/detect_res);
     }
     
     cvReleaseImage(&img);
@@ -344,7 +348,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
 {
-  return interfaceOrientation == UIInterfaceOrientationLandscapeLeft;
+  return interfaceOrientation == UIInterfaceOrientationLandscapeRight;
   //  if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone) {
   //      return (interfaceOrientation != UIInterfaceOrientationPortraitUpsideDown);
   //  } else {
@@ -494,6 +498,8 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   
   // Set the sampler texture unit to 0
   glUniform1i ( uniforms[UNIFORM_SAMPLER], 0 );
+  glUniform1f ( uniforms[UNIFORM_XRES], self.width );
+  glUniform1f ( uniforms[UNIFORM_YRES], self.height );
   glUniformMatrix4fv(uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX], 1, GL_FALSE, self.effect.transform.projectionMatrix.m);
   
   glDrawElements ( GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, indices );
@@ -568,6 +574,9 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     uniforms[UNIFORM_MODELVIEWPROJECTION_MATRIX] = glGetUniformLocation(_program, "modelViewProjectionMatrix");
     uniforms[UNIFORM_NORMAL_MATRIX] = glGetUniformLocation(_program, "normalMatrix");
     uniforms[UNIFORM_SAMPLER] = glGetUniformLocation(_program, "s_texture");
+  uniforms[UNIFORM_XRES] = glGetUniformLocation(_program, "xres");
+  uniforms[UNIFORM_YRES] = glGetUniformLocation(_program, "yres");
+  
     
     // Release vertex and fragment shaders.
     if (vertShader) {
