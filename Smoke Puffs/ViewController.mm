@@ -212,6 +212,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 	 Same thing as for the CALayer we are not in the main thread so ...*/
 	UIImage *image= [UIImage imageWithCGImage:newImage scale:1.0 orientation:UIImageOrientationRight];
 	
+    
     [self findBlobs:image];
     
 	/*We relase the CGImageRef*/
@@ -289,26 +290,27 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
                 blues_x = blues_x + x;
                 blues_y = blues_y + y;
             }
-        }
-            
-        if(greens_found>0){
-            int x = greens_x/greens_found;
-            int y = greens_y/greens_found;
-            NSLog(@"Greens Found: %i, %i",x, y);
-            cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));
-            green_x = x;
-            green_y = y;
-        }
-            
-        if(blues_found>0){
-            int x = blues_x/blues_found;
-            int y = blues_y/blues_found;
-            NSLog(@"Blues Found: %i, %i",x, y);
-            cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(255,255,255));
-            red_x = x;
-            red_y = y;
-        }
-    }                 
+        }                    
+    }    
+    
+    if(greens_found>0){
+        int x = greens_x/greens_found;
+        int y = greens_y/greens_found;
+        NSLog(@"Greens Found: %i, %i",x, y);
+        cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));
+        NSLog(@"%i, %i",x, y);
+        green_x = x;
+        green_y = y;
+    }
+    
+    if(blues_found>0){
+        int x = blues_x/blues_found;
+        int y = blues_y/blues_found;
+        //NSLog(@"Blues Found: %i, %i",x, y);
+        cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(255,255,255));
+        red_x = x;
+        red_y = y;
+    }
     
 }
 
@@ -383,14 +385,16 @@ int red_x, red_y;
       
   UIView *touchView = [[UIView alloc] init];
   [touchView setBackgroundColor:[UIColor redColor]];
-  touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
+  //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
+  touchView.frame = CGRectMake(red_x * (1920/20), red_y * (1080/20), 30, 30);
   touchView.layer.cornerRadius = 15;
   [self.view addSubview:touchView];
     
     
   UIView *touchView_g = [[UIView alloc] init]; 
   [touchView_g setBackgroundColor:[UIColor greenColor]];
-  touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
+  //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
+  touchView_g.frame = CGRectMake(green_x * (1920/20), green_y * (1080/20), 30, 30);  
   touchView_g.layer.cornerRadius = 15;
   [self.view addSubview:touchView_g];
 

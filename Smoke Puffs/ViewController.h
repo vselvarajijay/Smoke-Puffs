@@ -20,10 +20,12 @@
     cv::Mat _lastFrame;
     
     AVCaptureSession *_captureSession;
+
     
 }
 
 @property (nonatomic, retain) AVCaptureSession *captureSession;
+@property (nonatomic, retain) IBOutlet UIImageView *imageView;
 
 - (void)initCapture;
 
