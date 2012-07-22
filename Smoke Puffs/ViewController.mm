@@ -276,8 +276,9 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     _lastFrame = img;
     
-  const int detect_res = 100;
-    cv::resize(_lastFrame, _lastFrame, cv::Size(detect_res,detect_res));
+  const int detect_res_x = 100;
+  const int detect_res_y = 100;
+    cv::resize(_lastFrame, _lastFrame, cv::Size(detect_res_x,detect_res_y));
                 
     int greens_found = 0;
     int greens_x = 0;
@@ -311,17 +312,18 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         int x = greens_x/greens_found;
         int y = greens_y/greens_found;       
        // cv::circle(_lastFrame, cv::Point(y,x), 1, cvScalar(0,255,0));       
-        green_x = x * (768/detect_res);
-        green_y = y * (1024/detect_res);
+        green_x = x * (768/detect_res_x);
+        green_y = y * (1024/detect_res_y);
         
-        
+        green_x = 768 - green_x;
     }
     
     if(blues_found>detect_threshold){
         int x = blues_x/blues_found;
         int y = blues_y/blues_found;        
-        red_x = x * (768/detect_res);
-        red_y = y * (1024/detect_res);
+        red_x = x * (768/detect_res_x);
+        red_y = y * (1024/detect_res_y);        
+        red_x = 768 - red_x;        
     }
     
     cvReleaseImage(&img);
@@ -405,6 +407,8 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     red_x = (previous_red_x + red_x)/2;
     red_y = (previous_red_y + red_y)/2;
     
+    
+    
   UIView *ballView = [[UIView alloc] init];
   [ballView setBackgroundColor:[UIColor blackColor]];
   //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
@@ -418,7 +422,7 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     [touchView setBackgroundColor:[UIColor redColor]];
     //touchView.frame = CGRectMake(red_x * 1024 / self.width, 768 - red_y * 768 / self.height, 30, 30);
 //    touchView.frame = CGRectMake(red_x * (1920/100), red_y * (1080/100), 30, 30);
-    touchView.frame = CGRectMake(red_x , red_y , 30, 30);
+    touchView.frame = CGRectMake(red_y , red_x , 30, 30);
     touchView.layer.cornerRadius = 15;
     [self.view addSubview:touchView];
     
@@ -429,7 +433,8 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
     [touchView_g setBackgroundColor:[UIColor greenColor]];
     //touchView_g.frame = CGRectMake(green_x * 1024 / self.width, 768 - green_y * 768 / self.height, 30, 30);
     //touchView_g.frame = CGRectMake(green_x * (1920/100), green_y * (1080/100), 30, 30);  
-    touchView_g.frame = CGRectMake(green_x , green_y , 30, 30);  
+    touchView_g.frame = CGRectMake(green_y , green_x
+                                   , 30, 30);  
    // touchView_g.frame = CGRectMake(768/2, 1024/2 , 30, 30);  
     touchView_g.layer.cornerRadius = 15;
     [self.view addSubview:touchView_g];
