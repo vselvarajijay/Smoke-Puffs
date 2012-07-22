@@ -220,6 +220,7 @@ enum
   ball_wait_frames = -1;
   self.ball_x = self.width / 2.0;
   self.ball_y = self.height / 2.0;
+  soccer_ball.center = [self screenCoordsFromFluidCoords:CGPointMake(self.ball_x, self.ball_y)];
   [self.view addSubview:score_label];
   score_label.text = [NSString stringWithFormat: @"%d : %d", points_left, points_right];
   soccer_on = YES;
