@@ -188,9 +188,9 @@ enum
   
   score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(300.0f, 0.0f, 400.0f, 100.0) ];
   score_label.textAlignment =  UITextAlignmentCenter;
-  score_label.textColor = [UIColor blackColor];
+  score_label.textColor = [UIColor orangeColor];
   score_label.backgroundColor = [UIColor clearColor];
-  score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(48.0)];
+  score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(78.0)];
   
   [self setupSoccer];
   
