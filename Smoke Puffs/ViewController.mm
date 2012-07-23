@@ -65,6 +65,8 @@ enum
   UIView* goal_left;
   UIView* goal_right;
   UIImageView* soccer_ball;
+  UIImageView *androidView;
+  UIImageView *cmView;
   int ball_size;
   int soccer_ball_size;
   int goal_height;
@@ -166,19 +168,37 @@ enum
     [self.view setMultipleTouchEnabled:YES];
   
   ball_size = 30;
-  soccer_ball_size = 40;
+  soccer_ball_size = 80;
         
+    
+    
+  UIImage *cm = [UIImage imageNamed: @"cm.jpeg"];  
+  cmView = [[UIImageView alloc] initWithImage:cm];
+  cmView.frame =   CGRectMake(0, 0, 80, 80);
+
   red_ball = [[UIView alloc] init];
   [red_ball setBackgroundColor:[UIColor redColor]];
   red_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
   red_ball.layer.cornerRadius = ball_size/2;
-  [self.view addSubview:red_ball];
+    
+  [self.view addSubview:cmView];
   
-  green_ball = [[UIView alloc] init];
+    
+    
+    
+  UIImage *android = [UIImage imageNamed: @"android.png"];
+  androidView = [[UIImageView alloc] initWithImage:android];
+  androidView.frame = CGRectMake(0, 0, 80, 80);
+
+    
+  
+    
+    green_ball = [[UIView alloc] init];
   [green_ball setBackgroundColor:[UIColor greenColor]];
   green_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
   green_ball.layer.cornerRadius = ball_size/2;
-  [self.view addSubview:green_ball];
+    
+  [self.view addSubview:androidView];
   
   soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
   soccer_ball.frame = CGRectMake(0, 0, soccer_ball_size, soccer_ball_size);
@@ -544,7 +564,12 @@ int previous_red_x = 768/2, previous_red_y = 1024/2;
   red_x = (previous_red_x + red_x)/2;
   red_y = (previous_red_y + red_y)/2;
   red_ball.center = CGPointMake(red_y , red_x);
+  cmView.center = CGPointMake(red_y , red_x);
+
   green_ball.center = CGPointMake(green_y , green_x);
+  androidView.center = CGPointMake(green_y , green_x);
+
+
 
     
   

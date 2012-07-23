@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D357F5815BC99C800453226 /* android.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D357F5715BC99C800453226 /* android.png */; };
+		0D357F5A15BC9C4B00453226 /* cm.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 0D357F5915BC9C4B00453226 /* cm.jpeg */; };
 		0D8DB00D15BB6ED8002E1554 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8DB00C15BB6ED8002E1554 /* libz.dylib */; };
 		C968782B15BA6901001F8D84 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782A15BA6901001F8D84 /* UIKit.framework */; };
 		C968782D15BA6901001F8D84 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782C15BA6901001F8D84 /* Foundation.framework */; };
@@ -82,6 +84,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		0D357F5715BC99C800453226 /* android.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = android.png; sourceTree = "<group>"; };
+		0D357F5915BC9C4B00453226 /* cm.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cm.jpeg; sourceTree = "<group>"; };
 		0D8DB00C15BB6ED8002E1554 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		C968782615BA6901001F8D84 /* Smoke Puffs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Smoke Puffs.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C968782A15BA6901001F8D84 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
@@ -458,6 +462,8 @@
 		C968783415BA6901001F8D84 /* Smoke Puffs */ = {
 			isa = PBXGroup;
 			children = (
+				0D357F5915BC9C4B00453226 /* cm.jpeg */,
+				0D357F5715BC99C800453226 /* android.png */,
 				C968786D15BA6E4D001F8D84 /* Eigen */,
 				C968783D15BA6901001F8D84 /* AppDelegate.h */,
 				C968783E15BA6901001F8D84 /* AppDelegate.m */,
@@ -1136,6 +1142,8 @@
 				C96879A915BA6E4E001F8D84 /* SVD in Resources */,
 				C96879AA15BA6E4E001F8D84 /* UmfPackSupport in Resources */,
 				C96D794D15BC6FF800E71575 /* soccer_ball.png in Resources */,
+				0D357F5815BC99C800453226 /* android.png in Resources */,
+				0D357F5A15BC9C4B00453226 /* cm.jpeg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
