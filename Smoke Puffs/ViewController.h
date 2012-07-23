@@ -16,12 +16,7 @@
 
 
 @interface ViewController : GLKViewController <AVCaptureVideoDataOutputSampleBufferDelegate> {
-    cv::VideoCapture *_videoCapture;
-    cv::Mat _lastFrame;
-    
-    AVCaptureSession *_captureSession;
-
-    
+   AVCaptureSession *_captureSession;
 }
 
 @property (nonatomic, retain) AVCaptureSession *captureSession;

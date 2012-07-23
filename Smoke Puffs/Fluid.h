@@ -45,11 +45,21 @@ class Fluid {
   inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
   
   inline Eigen::Vector2f ClipPoint(const Eigen::Vector2f& src) {
-    return Eigen::Vector2f(Clip(src[0], 0.0f, w_+1.0f-(1e-4)), Clip(src[1], 0.0f, h_+1.0f-(1e-4)));
+    return Eigen::Vector2f(Clip(src[0], 0.0f, static_cast<float>(w_)), Clip(src[1], 0.0f, static_cast<float>(h_)));
   }
   
-  inline int fidx(int axis, int x, int y) { return axis * w_ * h_ + x * h_ + y; }
-  inline int vidx(int x, int y) { return x * h_ + y; }
+  inline int fidx(int axis, int x, int y) { int res = axis * w_ * h_ + x * h_ + y;
+//    assert(w_ == 128);
+//    assert(h_ == 96);
+//    assert(res >= 0);
+//    assert(res < w_ * h_ * 2);
+    return res; }
+  inline int vidx(int x, int y) { int res = x * h_ + y;
+//    assert(w_ == 128);
+//    assert(h_ == 96);
+//    assert(res >= 0);
+//    assert(res < w_ * h_);
+    return res; }
   inline float InterpolateXVelocity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0]);
     int sy = static_cast<int>(source[1] - 0.5f);
