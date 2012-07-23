@@ -7,7 +7,6 @@
 //
 
 #import "ViewController.h"
-#import "UIImage+OpenCV.h"
 
 #import <QuartzCore/QuartzCore.h>
 

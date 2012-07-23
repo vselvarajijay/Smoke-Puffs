@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		0D357F5815BC99C800453226 /* android.png in Resources */ = {isa = PBXBuildFile; fileRef = 0D357F5715BC99C800453226 /* android.png */; };
 		0D357F5A15BC9C4B00453226 /* cm.jpeg in Resources */ = {isa = PBXBuildFile; fileRef = 0D357F5915BC9C4B00453226 /* cm.jpeg */; };
-		0D8DB00D15BB6ED8002E1554 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 0D8DB00C15BB6ED8002E1554 /* libz.dylib */; };
 		C968782B15BA6901001F8D84 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782A15BA6901001F8D84 /* UIKit.framework */; };
 		C968782D15BA6901001F8D84 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782C15BA6901001F8D84 /* Foundation.framework */; };
 		C968782F15BA6901001F8D84 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782E15BA6901001F8D84 /* CoreGraphics.framework */; };
@@ -59,15 +58,11 @@
 		C96879AA15BA6E4E001F8D84 /* UmfPackSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968798E15BA6E4E001F8D84 /* UmfPackSupport */; };
 		C96D794D15BC6FF800E71575 /* soccer_ball.png in Resources */ = {isa = PBXBuildFile; fileRef = C96D794C15BC6FF800E71575 /* soccer_ball.png */; };
 		C989481215BB436C009517AA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481115BB436C009517AA /* QuartzCore.framework */; };
-		C989481515BB597F009517AA /* OpenCV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481415BB597F009517AA /* OpenCV.framework */; };
 		C989481715BB5999009517AA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481615BB5999009517AA /* CoreVideo.framework */; };
 		C989481915BB599E009517AA /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481815BB599E009517AA /* AVFoundation.framework */; };
 		C989481B15BB59A3009517AA /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481A15BB59A3009517AA /* CoreMedia.framework */; };
 		C989481D15BB59A8009517AA /* ImageIO.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481C15BB59A8009517AA /* ImageIO.framework */; };
 		C989481E15BB59B2009517AA /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C968782E15BA6901001F8D84 /* CoreGraphics.framework */; };
-		C989481F15BB59BD009517AA /* OpenCV.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481415BB597F009517AA /* OpenCV.framework */; };
-		C989482415BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */; };
-		C989482515BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */ = {isa = PBXBuildFile; fileRef = C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */; };
 		C989482715BB5A30009517AA /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481815BB599E009517AA /* AVFoundation.framework */; };
 		C989482815BB5A35009517AA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481615BB5999009517AA /* CoreVideo.framework */; };
 		C989482915BB5A46009517AA /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481A15BB59A3009517AA /* CoreMedia.framework */; };
@@ -86,7 +81,6 @@
 /* Begin PBXFileReference section */
 		0D357F5715BC99C800453226 /* android.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = android.png; sourceTree = "<group>"; };
 		0D357F5915BC9C4B00453226 /* cm.jpeg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; path = cm.jpeg; sourceTree = "<group>"; };
-		0D8DB00C15BB6ED8002E1554 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
 		C968782615BA6901001F8D84 /* Smoke Puffs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Smoke Puffs.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C968782A15BA6901001F8D84 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C968782C15BA6901001F8D84 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -371,13 +365,10 @@
 		C968798E15BA6E4E001F8D84 /* UmfPackSupport */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = UmfPackSupport; sourceTree = "<group>"; };
 		C96D794C15BC6FF800E71575 /* soccer_ball.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = soccer_ball.png; sourceTree = "<group>"; };
 		C989481115BB436C009517AA /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
-		C989481415BB597F009517AA /* OpenCV.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = OpenCV.framework; sourceTree = "<group>"; };
 		C989481615BB5999009517AA /* CoreVideo.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreVideo.framework; path = System/Library/Frameworks/CoreVideo.framework; sourceTree = SDKROOT; };
 		C989481815BB599E009517AA /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		C989481A15BB59A3009517AA /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		C989481C15BB59A8009517AA /* ImageIO.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ImageIO.framework; path = System/Library/Frameworks/ImageIO.framework; sourceTree = SDKROOT; };
-		C989482215BB5A1D009517AA /* UIImage+OpenCV.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+OpenCV.h"; sourceTree = "<group>"; };
-		C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = "UIImage+OpenCV.mm"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -385,7 +376,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0D8DB00D15BB6ED8002E1554 /* libz.dylib in Frameworks */,
 				C989482915BB5A46009517AA /* CoreMedia.framework in Frameworks */,
 				C989482715BB5A30009517AA /* AVFoundation.framework in Frameworks */,
 				C989482815BB5A35009517AA /* CoreVideo.framework in Frameworks */,
@@ -394,7 +384,6 @@
 				C968782F15BA6901001F8D84 /* CoreGraphics.framework in Frameworks */,
 				C968783115BA6901001F8D84 /* GLKit.framework in Frameworks */,
 				C968783315BA6901001F8D84 /* OpenGLES.framework in Frameworks */,
-				C989481515BB597F009517AA /* OpenCV.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -411,7 +400,6 @@
 				C968785415BA6902001F8D84 /* SenTestingKit.framework in Frameworks */,
 				C968785515BA6902001F8D84 /* UIKit.framework in Frameworks */,
 				C968785615BA6902001F8D84 /* Foundation.framework in Frameworks */,
-				C989481F15BB59BD009517AA /* OpenCV.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -421,9 +409,6 @@
 		C968781B15BA68FF001F8D84 = {
 			isa = PBXGroup;
 			children = (
-				0D8DB00C15BB6ED8002E1554 /* libz.dylib */,
-				C989482215BB5A1D009517AA /* UIImage+OpenCV.h */,
-				C989482315BB5A1D009517AA /* UIImage+OpenCV.mm */,
 				C968783415BA6901001F8D84 /* Smoke Puffs */,
 				C968785915BA6902001F8D84 /* Smoke PuffsTests */,
 				C968782915BA6901001F8D84 /* Frameworks */,
@@ -447,7 +432,6 @@
 				C989481A15BB59A3009517AA /* CoreMedia.framework */,
 				C989481815BB599E009517AA /* AVFoundation.framework */,
 				C989481615BB5999009517AA /* CoreVideo.framework */,
-				C989481415BB597F009517AA /* OpenCV.framework */,
 				C989481115BB436C009517AA /* QuartzCore.framework */,
 				C968782A15BA6901001F8D84 /* UIKit.framework */,
 				C968782C15BA6901001F8D84 /* Foundation.framework */,
@@ -1182,7 +1166,6 @@
 				C968783F15BA6901001F8D84 /* AppDelegate.m in Sources */,
 				C968784C15BA6901001F8D84 /* ViewController.mm in Sources */,
 				C968786B15BA6C14001F8D84 /* Fluid.cpp in Sources */,
-				C989482415BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1191,7 +1174,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				C968786115BA6902001F8D84 /* Smoke_PuffsTests.m in Sources */,
-				C989482515BB5A1D009517AA /* UIImage+OpenCV.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
