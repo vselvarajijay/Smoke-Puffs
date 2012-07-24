@@ -24,7 +24,7 @@ class Fluid {
 
   void ApplyImpulses();
   void AddImpulse(float x0, float y0,
-                  float dx, float dy);
+                  float vx, float vy);
   
   void GetLines(std::vector<float>* line_coords, float scale);
   void GetDensities(std::vector<float>* densities);
@@ -118,7 +118,7 @@ class Fluid {
   std::vector<float> densities_;
 
   std::vector<Eigen::Vector2f> pending_impulse_origins_;
-  std::vector<Eigen::Vector2f> pending_impulse_deltas_;
+  std::vector<Eigen::Vector2f> pending_impulse_velocities_;
   
   int w_;
   int h_;

@@ -143,25 +143,25 @@ void Fluid::GetDensities(std::vector<float>* densities) {
 }
 
 
-void Fluid::AddImpulse(float x0, float y0, float dx, float dy) {
+void Fluid::AddImpulse(float x0, float y0, float vx, float vy) {
   pending_impulse_origins_.push_back(Eigen::Vector2f(x0, y0));
-  pending_impulse_deltas_.push_back(Eigen::Vector2f(dx*50.0, dy*50.0));
+  pending_impulse_velocities_.push_back(Eigen::Vector2f(vx*50.0, vy*50.0));
 }
 
 void Fluid::ApplyImpulses() {
   static int call_count = 0;
   if (call_count < 3) {
     pending_impulse_origins_.clear();
-    pending_impulse_deltas_.clear();
+    pending_impulse_velocities_.clear();
     ++call_count;
     return;
   }
   
-  assert(pending_impulse_origins_.size() == pending_impulse_deltas_.size());
+  assert(pending_impulse_origins_.size() == pending_impulse_velocities_.size());
   
   for (size_t i = 0; i < pending_impulse_origins_.size(); ++i) {
     const Eigen::Vector2f& origin = pending_impulse_origins_[i];
-    const Eigen::Vector2f& delta = pending_impulse_deltas_[i];
+    const Eigen::Vector2f& delta = pending_impulse_velocities_[i];
     
     int x = static_cast<int>(origin[0]);
     int y = static_cast<int>(origin[1]);
@@ -189,7 +189,7 @@ void Fluid::ApplyImpulses() {
   }
   
   pending_impulse_origins_.clear();
-  pending_impulse_deltas_.clear();
+  pending_impulse_velocities_.clear();
 }
 
 void Fluid::AdvectDensity(float dt) {
