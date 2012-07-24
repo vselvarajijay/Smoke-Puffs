@@ -9,20 +9,8 @@
 #import <UIKit/UIKit.h>
 #import <GLKit/GLKit.h>
 #import <AVFoundation/AVFoundation.h>
-#import <CoreGraphics/CoreGraphics.h>
-#import <CoreVideo/CoreVideo.h>
-#import <CoreMedia/CoreMedia.h>
-
-
 
 @interface ViewController : GLKViewController <AVCaptureVideoDataOutputSampleBufferDelegate> {
-   AVCaptureSession *_captureSession;
 }
-
-@property (nonatomic, retain) AVCaptureSession *captureSession;
-@property (nonatomic, retain) IBOutlet UIImageView *imageView;
-
-- (void)initCapture;
-
 
 @end

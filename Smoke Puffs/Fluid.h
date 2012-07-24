@@ -9,16 +9,15 @@
 #ifndef Smoke_Puffs_Fluid_h
 #define Smoke_Puffs_Fluid_h
 
-#include "Eigen/Dense"
-#include "Eigen/SparseCore"
+#include <vector>
+
+#include <Eigen/Dense>
 
 class Fluid {
  public:
   Fluid(int width, int height);
   ~Fluid() {}
-
-  //void BuildMatrices();
-
+  
   void Advect(float dt);
   void Project();
   void FixBoundaries();
@@ -48,18 +47,22 @@ class Fluid {
     return Eigen::Vector2f(Clip(src[0], 0.0f, static_cast<float>(w_)), Clip(src[1], 0.0f, static_cast<float>(h_)));
   }
   
-  inline int fidx(int axis, int x, int y) { int res = axis * w_ * h_ + x * h_ + y;
-//    assert(w_ == 128);
-//    assert(h_ == 96);
-//    assert(res >= 0);
-//    assert(res < w_ * h_ * 2);
-    return res; }
-  inline int vidx(int x, int y) { int res = x * h_ + y;
-//    assert(w_ == 128);
-//    assert(h_ == 96);
-//    assert(res >= 0);
-//    assert(res < w_ * h_);
-    return res; }
+  inline int fidx(int axis, int x, int y) {
+    int res = axis * w_ * h_ + x * h_ + y;
+#ifdef DEBUG
+    assert(res >= 0);
+    assert(res < w_ * h_ * 2);
+#endif
+    return res;
+  }
+  inline int vidx(int x, int y) {
+    int res = x * h_ + y;
+#ifdef DEBUG
+    assert(res >= 0);
+    assert(res < w_ * h_);
+#endif
+    return res;
+  }
   inline float InterpolateXVelocity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0]);
     int sy = static_cast<int>(source[1] - 0.5f);
@@ -105,12 +108,6 @@ class Fluid {
   inline void SplatCenterVelocity(int x, int y,
                                   const Eigen::Vector2f& vel,
                                   std::vector<float>* new_fluxes) {
-    /*
-    int x = static_cast<int>(floor(pos[0]));
-    int y = static_cast<int>(floor(pos[1]));
-    float fx = pos[0] - x;
-    float fy = pos[1] - y;
-     */
     if (x > 0) (*new_fluxes)[fidx(0, x, y)] += 0.5 * vel[0];
     if (x < w_-1) (*new_fluxes)[fidx(0, x+1, y)] += 0.5 * vel[0];
     if (y > 0) (*new_fluxes)[fidx(1, x, y)] += 0.5 * vel[1];

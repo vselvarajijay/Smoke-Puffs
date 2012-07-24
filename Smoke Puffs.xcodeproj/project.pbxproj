@@ -409,6 +409,7 @@
 		C968781B15BA68FF001F8D84 = {
 			isa = PBXGroup;
 			children = (
+				C968786D15BA6E4D001F8D84 /* Eigen */,
 				C968783415BA6901001F8D84 /* Smoke Puffs */,
 				C968785915BA6902001F8D84 /* Smoke PuffsTests */,
 				C968782915BA6901001F8D84 /* Frameworks */,
@@ -448,7 +449,6 @@
 			children = (
 				0D357F5915BC9C4B00453226 /* cm.jpeg */,
 				0D357F5715BC99C800453226 /* android.png */,
-				C968786D15BA6E4D001F8D84 /* Eigen */,
 				C968783D15BA6901001F8D84 /* AppDelegate.h */,
 				C968783E15BA6901001F8D84 /* AppDelegate.m */,
 				C968784015BA6901001F8D84 /* MainStoryboard_iPhone.storyboard */,
@@ -1280,9 +1280,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Smoke Puffs/Smoke Puffs-Prefix.pch";
 				"GCC_THUMB_SUPPORT[arch=armv6]" = "";
-				HEADER_SEARCH_PATHS = /opt/local/include/opencv/;
+				HEADER_SEARCH_PATHS = $SRCROOT;
 				INFOPLIST_FILE = "Smoke Puffs/Smoke Puffs-Info.plist";
-				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -1299,9 +1299,9 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "Smoke Puffs/Smoke Puffs-Prefix.pch";
 				"GCC_THUMB_SUPPORT[arch=armv6]" = "";
-				HEADER_SEARCH_PATHS = /opt/local/include/opencv/;
+				HEADER_SEARCH_PATHS = $SRCROOT;
 				INFOPLIST_FILE = "Smoke Puffs/Smoke Puffs-Info.plist";
-				LIBRARY_SEARCH_PATHS = /opt/local/lib;
+				LIBRARY_SEARCH_PATHS = "";
 				OTHER_CFLAGS = (
 					"-DNS_BLOCK_ASSERTIONS=1",
 					"-ffast-math",
