@@ -39,6 +39,8 @@ class Fluid {
   void AdvectDensity(float dt);
   void AdvectPoint(float dt, float x0, float y0, float* xf, float* yf);
 
+  void set_smoke_radius(int radius) { smoke_radius_ = radius; }
+  
  private:
   inline int Clip(int x, int lower, int upper) { return std::max(lower, std::min(upper, x)); }
   inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
@@ -122,6 +124,8 @@ class Fluid {
   
   int w_;
   int h_;
+  
+  int smoke_radius_;
 };
 
 #endif

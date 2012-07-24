@@ -30,6 +30,8 @@ Fluid::Fluid(int width, int height) {
   for (int i = 0; i < 10; ++i) {
     Project();
   }
+  
+  smoke_radius_ = 8;
 }
 
 void Fluid::Advect(float dt) {
@@ -176,14 +178,14 @@ void Fluid::ApplyImpulses() {
       fluxes_[fidx(1,x,y+1)] += fy * delta[1];
     }
     
-    for (int k = -8; k < 9; ++k) {
+    for (int k = -smoke_radius_; k <= smoke_radius_; ++k) {
       int xk = x + k;
       if (xk < 1 || xk >= w_ - 1) continue;
-      for (int j = -8; j < 9; ++j) {
+      for (int j = -smoke_radius_; j <= smoke_radius_; ++j) {
         int yj = y + j;
-        if (k*k + j*j > 64) continue;
+        if (k*k + j*j > smoke_radius_*smoke_radius_) continue;
         if (yj < 1 || yj >= h_ - 1) continue;
-        densities_[vidx(xk,yj)] = std::max(densities_[vidx(xk, yj)], std::max(1.0f, 4.0f / (1 + sqrtf(k*k + j*j))));
+        densities_[vidx(xk,yj)] = std::max(densities_[vidx(xk, yj)], std::max(1.0f, 3.0f / (1 + sqrtf(k*k + j*j))));
       }
     }
   }

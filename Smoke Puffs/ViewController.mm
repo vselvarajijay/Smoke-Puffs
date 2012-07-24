@@ -67,7 +67,15 @@ GLint uniforms[NUM_UNIFORMS];
   UILabel* score_label;
   int ball_wait_frames;
   
+  float _view_width;
+  float _view_height;
+  
   BOOL soccer_on;
+  
+  int green_x, green_y;
+  int previous_green_x, previous_green_y;
+  int red_x, red_y;
+  int previous_red_x, previous_red_y;
 }
 @property (nonatomic, retain) AVCaptureSession *captureSession;
 
@@ -76,6 +84,9 @@ GLint uniforms[NUM_UNIFORMS];
 
 @property (nonatomic, assign) int width;
 @property (nonatomic, assign) int height;
+
+@property (nonatomic, assign) float view_width;
+@property (nonatomic, assign) float view_height;
 
 @property (nonatomic, assign) Fluid* fluid;
 @property (nonatomic, assign) float dt;
@@ -106,6 +117,8 @@ GLint uniforms[NUM_UNIFORMS];
 
 @synthesize context = _context;
 @synthesize effect = _effect;
+@synthesize view_width = _view_width;
+@synthesize view_height = _view_height;
 @synthesize width = _width;
 @synthesize height = _height;
 @synthesize fluid = _fluid;
@@ -115,14 +128,14 @@ GLint uniforms[NUM_UNIFORMS];
 
 - (CGPoint)screenCoordsFromFluidCoords:(CGPoint)pt
 {
-  return CGPointMake(1024.0f / self.width * pt.x,
-                     768.0f - 768.0f / self.height * pt.y);
+  return CGPointMake(self.view_width / self.width * pt.x,
+                     self.view_height - self.view_height / self.height * pt.y);
 }
 
 - (CGPoint)fluidCoordsFromScreenCoords:(CGPoint)pt
 {
-  return CGPointMake(self.width / 1024.0f * pt.x,
-                     (768.0f - pt.y) * self.height / 768.0f);
+  return CGPointMake(self.width / self.view_width * pt.x,
+                     (self.view_height - pt.y) * self.height / self.view_height);
 }
 
 - (void)pointScored
@@ -148,25 +161,28 @@ GLint uniforms[NUM_UNIFORMS];
   view.context = self.context;
   view.drawableDepthFormat = GLKViewDrawableDepthFormat24;
   
-  self.width = 128;
-  self.height = 96;
+  self.view_width = self.view.frame.size.height;
+  self.view_height = self.view.frame.size.width;
+  self.width = MIN(128, self.view_width/6);
+  self.height = MIN(96, self.view_height/6);
   self.fluid = new Fluid(self.width, self.height);
+  self.fluid->set_smoke_radius(self.width / 16.0f);
   self.dt = 0.25f;
   self.ball_x = self.width * 0.5f;
   self.ball_y = self.height * 0.5f;
-  
   
   [self initCapture];
   
   [self setupGL];
   [self.view setMultipleTouchEnabled:YES];
   
-  ball_size = 30;
-  soccer_ball_size = 80;
+  ball_size = self.view_width / 34.0f;
+  soccer_ball_size = self.view_width / 12.8f;
+  float character_size = self.view_width / 12.8f;
   
   UIImage *cm = [UIImage imageNamed: @"cm.jpeg"];  
   cmView = [[UIImageView alloc] initWithImage:cm];
-  cmView.frame =   CGRectMake(0, 0, 80, 80);
+  cmView.frame =   CGRectMake(0, 0, character_size, character_size);
   
   red_ball = [[UIView alloc] init];
   [red_ball setBackgroundColor:[UIColor redColor]];
@@ -175,15 +191,9 @@ GLint uniforms[NUM_UNIFORMS];
   
   [self.view addSubview:cmView];
   
-  
-  
-  
   UIImage *android = [UIImage imageNamed: @"android.png"];
   androidView = [[UIImageView alloc] initWithImage:android];
-  androidView.frame = CGRectMake(0, 0, 80, 80);
-  
-  
-  
+  androidView.frame = CGRectMake(0, 0, character_size, character_size);
   
   green_ball = [[UIView alloc] init];
   [green_ball setBackgroundColor:[UIColor greenColor]];
@@ -195,27 +205,36 @@ GLint uniforms[NUM_UNIFORMS];
   soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
   soccer_ball.frame = CGRectMake(0, 0, soccer_ball_size, soccer_ball_size);
   
-  goal_width = 150;
-  goal_height = 400;
+  goal_width = self.view_width / 7.0f;
+  goal_height = self.view_height / 2.0f;
   
   goal_left = [[UIView alloc] init];
-  goal_left.frame = CGRectMake(0, 384-goal_height/2, goal_width, goal_height);
-  goal_left.layer.borderWidth = 10.0f;
+  goal_left.frame = CGRectMake(0, (self.view_height-goal_height)/2, goal_width, goal_height);
+  goal_left.layer.borderWidth = self.view_width / 102.0f;
   goal_left.layer.borderColor = [[UIColor blackColor] CGColor];
   
   
   goal_right = [[UIView alloc] init];
-  goal_right.frame = CGRectMake(1024 - goal_width, 384-goal_height/2, goal_width, goal_height);
-  goal_right.layer.borderWidth = 10.0f;
+  goal_right.frame = CGRectMake(self.view_width - goal_width, (self.view_height-goal_height)/2, goal_width, goal_height);
+  goal_right.layer.borderWidth = self.view_width / 102.0f;
   goal_right.layer.borderColor = [[UIColor blackColor] CGColor];
   
-  score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(300.0f, 0.0f, 400.0f, 100.0) ];
+  score_label = [ [UILabel alloc ] initWithFrame:CGRectMake(self.view_width * 0.33f, 0.0f, self.view_width*0.4f, self.view_height/7.6f) ];
   score_label.textAlignment =  UITextAlignmentCenter;
   score_label.textColor = [UIColor orangeColor];
   score_label.backgroundColor = [UIColor clearColor];
-  score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(78.0)];
+  score_label.font = [UIFont fontWithName:@"Arial Rounded MT Bold" size:(self.view_width/13.2f)];
   
   ball_wait_frames = -1;
+  
+  green_x = self.view_width / 2.0f;
+  green_y = self.view_height / 2.0f;
+  red_x = self.view_width / 2.0f;
+  red_y = self.view_height / 2.0f;
+  previous_green_x = self.view_width / 2.0f;
+  previous_green_y = self.view_height / 2.0f;
+  previous_red_x = self.view_width / 2.0f;
+  previous_red_y = self.view_height / 2.0f;
   
   soccer_on = NO;
   [self setupSoccer];
@@ -344,15 +363,15 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   if(greens_found>detect_threshold){
     int x = greens_x/greens_found;
     int y = greens_y/greens_found;       
-    green_x = (int)(x * (1024.0f/width));
-    green_y = 768 - (int)(y * (768.0f/height));               
+    green_x = (int)(x * (self.view_width/width));
+    green_y = self.view_height - (int)(y * (self.view_height/height));               
   }
   
   if(reds_found>detect_threshold){
     int x = reds_x/reds_found;
     int y = reds_y/reds_found;        
-    red_x = (int)(x * (1024.0f/width));
-    red_y = 768 - (int)(y * (768.0f/height));               
+    red_x = (int)(x * (self.view_width/width));
+    red_y = self.view_height - (int)(y * (self.view_height/height));               
   }
 }
 
@@ -406,12 +425,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 #pragma mark - GLKView and GLKViewController delegate methods
 
-
-int green_x = 1024/2, green_y = 768/2;
-int previous_green_x = 1024/2, previous_green_y = 768/2;
-int red_x, red_y;
-int previous_red_x = 1024/2, previous_red_y = 768/2;
-
 - (void)update
 {
   self.fluid->Step(self.dt);
@@ -427,7 +440,7 @@ int previous_red_x = 1024/2, previous_red_y = 768/2;
       }
       
       self.fluid->AdvectPoint(self.dt, self.ball_x, self.ball_y, &_ball_x, &_ball_y);
-      float ball_r = soccer_ball_size / 2.0f * self.width / 1024.0f;
+      float ball_r = soccer_ball_size / 2.0f * self.width / self.view_width;
       self.ball_x = std::max(ball_r, self.ball_x);
       self.ball_x = std::min(self.width - ball_r, self.ball_x);
       self.ball_y = std::max(ball_r, self.ball_y);
@@ -435,12 +448,12 @@ int previous_red_x = 1024/2, previous_red_y = 768/2;
       
       float ball_screen_r = soccer_ball_size / 2.0f - 4.0f;
       CGPoint ball_screen = [self screenCoordsFromFluidCoords:CGPointMake(self.ball_x, self.ball_y)];
-      if (ball_screen.y < (384.0f + goal_height/2 + ball_screen_r) && ball_screen.y > (384.0f - goal_height/2 - ball_screen_r)) {
+      if (ball_screen.y < ((self.view_height + goal_height)/2 + ball_screen_r) && ball_screen.y > ((self.view_height - goal_height)/2 - ball_screen_r)) {
         if (ball_screen.x < (ball_screen_r + goal_width)) {
           ++points_right;
           [self pointScored];
         }
-        if (ball_screen.x > (1024.0f - ball_screen_r - goal_width)) {
+        if (ball_screen.x > (self.view_width - ball_screen_r - goal_width)) {
           ++points_left;
           [self pointScored];
         }
@@ -449,7 +462,7 @@ int previous_red_x = 1024/2, previous_red_y = 768/2;
     }
   }
   
-  static const float motion_smoothness = 0.5f;
+  static const float motion_smoothness = 0.75f;
   
   green_x = motion_smoothness * previous_green_x + (1.0f - motion_smoothness) * green_x;
   green_y = motion_smoothness * previous_green_y + (1.0f - motion_smoothness) * green_y;
