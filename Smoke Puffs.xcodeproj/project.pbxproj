@@ -28,34 +28,6 @@
 		C968785E15BA6902001F8D84 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C968785C15BA6902001F8D84 /* InfoPlist.strings */; };
 		C968786115BA6902001F8D84 /* Smoke_PuffsTests.m in Sources */ = {isa = PBXBuildFile; fileRef = C968786015BA6902001F8D84 /* Smoke_PuffsTests.m */; };
 		C968786B15BA6C14001F8D84 /* Fluid.cpp in Sources */ = {isa = PBXBuildFile; fileRef = C968786A15BA6C14001F8D84 /* Fluid.cpp */; };
-		C968798F15BA6E4E001F8D84 /* Array in Resources */ = {isa = PBXBuildFile; fileRef = C968786E15BA6E4D001F8D84 /* Array */; };
-		C968799015BA6E4E001F8D84 /* Cholesky in Resources */ = {isa = PBXBuildFile; fileRef = C968786F15BA6E4D001F8D84 /* Cholesky */; };
-		C968799115BA6E4E001F8D84 /* CholmodSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968787015BA6E4D001F8D84 /* CholmodSupport */; };
-		C968799215BA6E4E001F8D84 /* Core in Resources */ = {isa = PBXBuildFile; fileRef = C968787115BA6E4D001F8D84 /* Core */; };
-		C968799315BA6E4E001F8D84 /* Dense in Resources */ = {isa = PBXBuildFile; fileRef = C968787215BA6E4D001F8D84 /* Dense */; };
-		C968799415BA6E4E001F8D84 /* Eigen in Resources */ = {isa = PBXBuildFile; fileRef = C968787315BA6E4D001F8D84 /* Eigen */; };
-		C968799515BA6E4E001F8D84 /* Eigen2Support in Resources */ = {isa = PBXBuildFile; fileRef = C968787415BA6E4D001F8D84 /* Eigen2Support */; };
-		C968799615BA6E4E001F8D84 /* Eigenvalues in Resources */ = {isa = PBXBuildFile; fileRef = C968787515BA6E4D001F8D84 /* Eigenvalues */; };
-		C968799715BA6E4E001F8D84 /* Geometry in Resources */ = {isa = PBXBuildFile; fileRef = C968787615BA6E4D001F8D84 /* Geometry */; };
-		C968799815BA6E4E001F8D84 /* Householder in Resources */ = {isa = PBXBuildFile; fileRef = C968787715BA6E4D001F8D84 /* Householder */; };
-		C968799915BA6E4E001F8D84 /* IterativeLinearSolvers in Resources */ = {isa = PBXBuildFile; fileRef = C968787815BA6E4D001F8D84 /* IterativeLinearSolvers */; };
-		C968799A15BA6E4E001F8D84 /* Jacobi in Resources */ = {isa = PBXBuildFile; fileRef = C968787915BA6E4D001F8D84 /* Jacobi */; };
-		C968799B15BA6E4E001F8D84 /* LeastSquares in Resources */ = {isa = PBXBuildFile; fileRef = C968787A15BA6E4D001F8D84 /* LeastSquares */; };
-		C968799C15BA6E4E001F8D84 /* LU in Resources */ = {isa = PBXBuildFile; fileRef = C968787B15BA6E4D001F8D84 /* LU */; };
-		C968799D15BA6E4E001F8D84 /* OrderingMethods in Resources */ = {isa = PBXBuildFile; fileRef = C968787C15BA6E4D001F8D84 /* OrderingMethods */; };
-		C968799E15BA6E4E001F8D84 /* PardisoSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968787D15BA6E4D001F8D84 /* PardisoSupport */; };
-		C968799F15BA6E4E001F8D84 /* PaStiXSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968787E15BA6E4D001F8D84 /* PaStiXSupport */; };
-		C96879A015BA6E4E001F8D84 /* QR in Resources */ = {isa = PBXBuildFile; fileRef = C968787F15BA6E4D001F8D84 /* QR */; };
-		C96879A115BA6E4E001F8D84 /* QtAlignedMalloc in Resources */ = {isa = PBXBuildFile; fileRef = C968788015BA6E4D001F8D84 /* QtAlignedMalloc */; };
-		C96879A215BA6E4E001F8D84 /* Sparse in Resources */ = {isa = PBXBuildFile; fileRef = C968788115BA6E4D001F8D84 /* Sparse */; };
-		C96879A315BA6E4E001F8D84 /* SparseCholesky in Resources */ = {isa = PBXBuildFile; fileRef = C968788215BA6E4D001F8D84 /* SparseCholesky */; };
-		C96879A415BA6E4E001F8D84 /* SparseCore in Resources */ = {isa = PBXBuildFile; fileRef = C968788315BA6E4D001F8D84 /* SparseCore */; };
-		C96879A515BA6E4E001F8D84 /* StdDeque in Resources */ = {isa = PBXBuildFile; fileRef = C968798915BA6E4E001F8D84 /* StdDeque */; };
-		C96879A615BA6E4E001F8D84 /* StdList in Resources */ = {isa = PBXBuildFile; fileRef = C968798A15BA6E4E001F8D84 /* StdList */; };
-		C96879A715BA6E4E001F8D84 /* StdVector in Resources */ = {isa = PBXBuildFile; fileRef = C968798B15BA6E4E001F8D84 /* StdVector */; };
-		C96879A815BA6E4E001F8D84 /* SuperLUSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968798C15BA6E4E001F8D84 /* SuperLUSupport */; };
-		C96879A915BA6E4E001F8D84 /* SVD in Resources */ = {isa = PBXBuildFile; fileRef = C968798D15BA6E4E001F8D84 /* SVD */; };
-		C96879AA15BA6E4E001F8D84 /* UmfPackSupport in Resources */ = {isa = PBXBuildFile; fileRef = C968798E15BA6E4E001F8D84 /* UmfPackSupport */; };
 		C96D794D15BC6FF800E71575 /* soccer_ball.png in Resources */ = {isa = PBXBuildFile; fileRef = C96D794C15BC6FF800E71575 /* soccer_ball.png */; };
 		C989481215BB436C009517AA /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481115BB436C009517AA /* QuartzCore.framework */; };
 		C989481715BB5999009517AA /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C989481615BB5999009517AA /* CoreVideo.framework */; };
@@ -1097,34 +1069,6 @@
 				C968784515BA6901001F8D84 /* MainStoryboard_iPad.storyboard in Resources */,
 				C968784715BA6901001F8D84 /* Shader.fsh in Resources */,
 				C968784915BA6901001F8D84 /* Shader.vsh in Resources */,
-				C968798F15BA6E4E001F8D84 /* Array in Resources */,
-				C968799015BA6E4E001F8D84 /* Cholesky in Resources */,
-				C968799115BA6E4E001F8D84 /* CholmodSupport in Resources */,
-				C968799215BA6E4E001F8D84 /* Core in Resources */,
-				C968799315BA6E4E001F8D84 /* Dense in Resources */,
-				C968799415BA6E4E001F8D84 /* Eigen in Resources */,
-				C968799515BA6E4E001F8D84 /* Eigen2Support in Resources */,
-				C968799615BA6E4E001F8D84 /* Eigenvalues in Resources */,
-				C968799715BA6E4E001F8D84 /* Geometry in Resources */,
-				C968799815BA6E4E001F8D84 /* Householder in Resources */,
-				C968799915BA6E4E001F8D84 /* IterativeLinearSolvers in Resources */,
-				C968799A15BA6E4E001F8D84 /* Jacobi in Resources */,
-				C968799B15BA6E4E001F8D84 /* LeastSquares in Resources */,
-				C968799C15BA6E4E001F8D84 /* LU in Resources */,
-				C968799D15BA6E4E001F8D84 /* OrderingMethods in Resources */,
-				C968799E15BA6E4E001F8D84 /* PardisoSupport in Resources */,
-				C968799F15BA6E4E001F8D84 /* PaStiXSupport in Resources */,
-				C96879A015BA6E4E001F8D84 /* QR in Resources */,
-				C96879A115BA6E4E001F8D84 /* QtAlignedMalloc in Resources */,
-				C96879A215BA6E4E001F8D84 /* Sparse in Resources */,
-				C96879A315BA6E4E001F8D84 /* SparseCholesky in Resources */,
-				C96879A415BA6E4E001F8D84 /* SparseCore in Resources */,
-				C96879A515BA6E4E001F8D84 /* StdDeque in Resources */,
-				C96879A615BA6E4E001F8D84 /* StdList in Resources */,
-				C96879A715BA6E4E001F8D84 /* StdVector in Resources */,
-				C96879A815BA6E4E001F8D84 /* SuperLUSupport in Resources */,
-				C96879A915BA6E4E001F8D84 /* SVD in Resources */,
-				C96879AA15BA6E4E001F8D84 /* UmfPackSupport in Resources */,
 				C96D794D15BC6FF800E71575 /* soccer_ball.png in Resources */,
 				0D357F5815BC99C800453226 /* android.png in Resources */,
 				0D357F5A15BC9C4B00453226 /* cm.jpeg in Resources */,
