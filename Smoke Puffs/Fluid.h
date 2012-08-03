@@ -46,7 +46,7 @@ class Fluid {
   inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
   
   inline Eigen::Vector2f ClipPoint(const Eigen::Vector2f& src) {
-    return Eigen::Vector2f(Clip(src[0], 0.0f, static_cast<float>(w_)), Clip(src[1], 0.0f, static_cast<float>(h_)));
+    return Eigen::Vector2f(Clip(src[0], 0.0f, static_cast<float>(w_)-1e-4), Clip(src[1], 0.0f, static_cast<float>(h_)-1e-4));
   }
   
   inline int fidx(int axis, int x, int y) {

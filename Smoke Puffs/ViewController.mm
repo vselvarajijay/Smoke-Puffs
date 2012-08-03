@@ -12,7 +12,10 @@
 #import <CoreVideo/CoreVideo.h>
 #import <CoreMedia/CoreMedia.h>
 
+#import <Eigen/Dense>
+
 #import "Fluid.h"
+#import "BlobTracker.h"
 
 #define RENDER_LINES 0
 
@@ -76,6 +79,8 @@ GLint uniforms[NUM_UNIFORMS];
   int previous_green_x, previous_green_y;
   int red_x, red_y;
   int previous_red_x, previous_red_y;
+  
+  BlobTracker* _tracker;
 }
 @property (nonatomic, retain) AVCaptureSession *captureSession;
 
@@ -94,6 +99,7 @@ GLint uniforms[NUM_UNIFORMS];
 @property (nonatomic, assign) float ball_x;
 @property (nonatomic, assign) float ball_y;
 
+@property (nonatomic, assign) BlobTracker* tracker;
 
 - (void)setupGL;
 - (void)tearDownGL;
@@ -125,6 +131,7 @@ GLint uniforms[NUM_UNIFORMS];
 @synthesize dt = _dt;
 @synthesize ball_x = _ball_x;
 @synthesize ball_y = _ball_y;
+@synthesize tracker = _tracker;
 
 - (CGPoint)screenCoordsFromFluidCoords:(CGPoint)pt
 {
@@ -227,6 +234,7 @@ GLint uniforms[NUM_UNIFORMS];
   
   ball_wait_frames = -1;
   
+  self.tracker = NULL;
   green_x = self.view_width / 2.0f;
   green_y = self.view_height / 2.0f;
   red_x = self.view_width / 2.0f;
@@ -331,47 +339,27 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 
 // Expects BGR[A] pixel ordering
 -(void)findBlobsInBuffer:(uint8_t*)buffer withWidth:(size_t)width Height:(size_t)height bytesPerPixel:(size_t)bpp bytesPerRow:(size_t)bpr { 
-  int greens_found = 0;
-  int greens_x = 0;
-  int greens_y = 0;
+  bool green_found = false;
+  int capture_green_x = 0;
+  int capture_green_y = 0;
+  bool red_found = false;
+  int capture_red_x = 0;
+  int capture_red_y = 0;
   
-  int reds_found = 0;
-  int reds_x = 0;
-  int reds_y = 0;
-  for(int x = 0;x<width;x++){
-    for(int y = 0;y<height;y++) {
-      size_t base = y*bpr + x*bpp;
-      uint8_t rVal = buffer[base + 2];
-      uint8_t gVal = buffer[base + 1];
-      uint8_t bVal = buffer[base + 0];
-      
-      if(gVal>100 && rVal<90 && bVal<90){
-        greens_found++;
-        greens_x = greens_x + x;
-        greens_y = greens_y + y;
-      }
-      
-      if(gVal<100 && bVal<100 && rVal>200){
-        reds_found++;
-        reds_x = reds_x + x;
-        reds_y = reds_y + y;
-      }
-    }                    
-  }    
-  
-  const int detect_threshold = 0;
-  if(greens_found>detect_threshold){
-    int x = greens_x/greens_found;
-    int y = greens_y/greens_found;       
-    green_x = (int)(x * (self.view_width/width));
-    green_y = self.view_height - (int)(y * (self.view_height/height));               
+  if (self.tracker == NULL) {
+    self.tracker = new BlobTracker(width, height, bpp, bpr);
   }
   
-  if(reds_found>detect_threshold){
-    int x = reds_x/reds_found;
-    int y = reds_y/reds_found;        
-    red_x = (int)(x * (self.view_width/width));
-    red_y = self.view_height - (int)(y * (self.view_height/height));               
+  self.tracker->FindBlobs(buffer,
+                          &green_found, &capture_green_x, &capture_green_y, &red_found, &capture_red_x, &capture_red_y);
+  
+  if (green_found) {
+    green_x = (int)(capture_green_x * (self.view_width / width));
+    green_y = (int)(self.view_height - capture_green_y * (self.view_height / height));
+  }
+  if (red_found) {
+    red_x = (int)(capture_red_x * (self.view_width / width));
+    red_y = (int)(self.view_height - capture_red_y * (self.view_height / height));
   }
 }
 
