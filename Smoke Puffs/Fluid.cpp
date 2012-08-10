@@ -204,46 +204,49 @@ void Fluid::Project() {
   vDSP_vthr(&inv_count[0], 1, &one, &inv_count[0], 1, w_*h_);
   vDSP_svdiv(&one, &inv_count[0], 1, &inv_count[0], 1, w_*h_);
   vDSP_vmul(&inv_count[0], 1, &fluid_[0], 1, &inv_count[0], 1, w_*h_);
-  float omega = 1.9f;
-  float one_minus_omega = 1.0f - omega;
-  vDSP_vsmul(&inv_count[0], 1, &omega, &inv_count[0], 1, w_*h_);
+  
+  // needed for SOR
+//  float omega = 1.9f;
+//  float one_minus_omega = 1.0f - omega;
+//  vDSP_vsmul(&inv_count[0], 1, &omega, &inv_count[0], 1, w_*h_);
   
   std::vector<float> sigma(w_*h_);
   std::vector<float> new_pressure(w_*h_);
-  const int MAX_ITERS = 40;
+  const int MAX_ITERS = 60;
   for (int k = 0; k < MAX_ITERS; ++k) {
     // Jacobi
-//    for (int x = 1; x < w_-1; ++x) {
-//      vDSP_vadd(&pressure[0] + x*h_ + h_, 1, &pressure[0] + x*h_ + 1, 1, &sigma[0] + x*h_, 1, h_);
-//      vDSP_vadd(&pressure[0] + x*h_ - h_, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
-//      vDSP_vadd(&pressure[0] + x*h_ - 1, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
-//      vDSP_vam(&sigma[0] + x*h_, 1, &div[0] + x*h_, 1, &inv_count[0] + x*h_, 1, &new_pressure[0] + x*h_, 1, h_);
-//    }
-    
-    if (k == MAX_ITERS - 1) {
-      std::copy(pressure.begin(), pressure.end(), new_pressure.begin());
+    for (int x = 1; x < w_-1; ++x) {
+      vDSP_vadd(&pressure[0] + x*h_ + h_, 1, &pressure[0] + x*h_ + 1, 1, &sigma[0] + x*h_, 1, h_);
+      vDSP_vadd(&pressure[0] + x*h_ - h_, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
+      vDSP_vadd(&pressure[0] + x*h_ - 1, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
+      vDSP_vam(&sigma[0] + x*h_, 1, &div[0] + x*h_, 1, &inv_count[0] + x*h_, 1, &new_pressure[0] + x*h_, 1, h_);
     }
+    
+
     
     // SOR
-    
-    int even_offset = 0;
-    int odd_offset = 1;
-    for (int x = 1; x < w_-1; ++x) {
-      vDSP_vadd(&pressure[0] + x*h_ + h_ + even_offset, 2, &pressure[0] + x*h_ + 1 + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
-      vDSP_vadd(&pressure[0] + x*h_ - h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
-      vDSP_vadd(&pressure[0] + x*h_ - 1 + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
-      vDSP_vsmul(&pressure[0] + x*h_ + even_offset, 2, &one_minus_omega, &pressure[0] + x*h_ + even_offset, 2, h_/2);
-      vDSP_vam(&sigma[0] + x*h_ + even_offset, 2, &div[0] + x*h_ + even_offset, 2, &inv_count[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
-      vDSP_vadd(&sigma[0] + x*h_ + even_offset, 2, &pressure[0] + x*h_ + even_offset, 2, &pressure[0] + x*h_ + even_offset, 2, h_/2);
-    }
-    for (int x = 1; x < w_-1; ++x) {
-      vDSP_vadd(&pressure[0] + x*h_ + h_ + odd_offset, 2, &pressure[0] + x*h_ + 1 + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
-      vDSP_vadd(&pressure[0] + x*h_ - h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
-      vDSP_vadd(&pressure[0] + x*h_ - 1 + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
-      vDSP_vsmul(&pressure[0] + x*h_ + odd_offset, 2, &one_minus_omega, &pressure[0] + x*h_ + odd_offset, 2, h_/2);
-      vDSP_vam(&sigma[0] + x*h_ + odd_offset, 2, &div[0] + x*h_ + odd_offset, 2, &inv_count[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
-      vDSP_vadd(&sigma[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, h_/2);
-    }
+//    if (k == MAX_ITERS - 1) {
+//      std::copy(pressure.begin(), pressure.end(), new_pressure.begin());
+//    }
+//    
+//    int even_offset = 0;
+//    int odd_offset = 1;
+//    for (int x = 1; x < w_-1; ++x) {
+//      vDSP_vadd(&pressure[0] + x*h_ + h_ + even_offset, 2, &pressure[0] + x*h_ + 1 + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
+//      vDSP_vadd(&pressure[0] + x*h_ - h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
+//      vDSP_vadd(&pressure[0] + x*h_ - 1 + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
+//      vDSP_vsmul(&pressure[0] + x*h_ + even_offset, 2, &one_minus_omega, &pressure[0] + x*h_ + even_offset, 2, h_/2);
+//      vDSP_vam(&sigma[0] + x*h_ + even_offset, 2, &div[0] + x*h_ + even_offset, 2, &inv_count[0] + x*h_ + even_offset, 2, &sigma[0] + x*h_ + even_offset, 2, h_/2);
+//      vDSP_vadd(&sigma[0] + x*h_ + even_offset, 2, &pressure[0] + x*h_ + even_offset, 2, &pressure[0] + x*h_ + even_offset, 2, h_/2);
+//    }
+//    for (int x = 1; x < w_-1; ++x) {
+//      vDSP_vadd(&pressure[0] + x*h_ + h_ + odd_offset, 2, &pressure[0] + x*h_ + 1 + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
+//      vDSP_vadd(&pressure[0] + x*h_ - h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
+//      vDSP_vadd(&pressure[0] + x*h_ - 1 + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
+//      vDSP_vsmul(&pressure[0] + x*h_ + odd_offset, 2, &one_minus_omega, &pressure[0] + x*h_ + odd_offset, 2, h_/2);
+//      vDSP_vam(&sigma[0] + x*h_ + odd_offset, 2, &div[0] + x*h_ + odd_offset, 2, &inv_count[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
+//      vDSP_vadd(&sigma[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, h_/2);
+//    }
 
     // Scalar Jacobi
 //    for (int x = 1; x < w_-1; ++x) {
@@ -271,7 +274,7 @@ void Fluid::Project() {
       std::cerr << "FINAL REL ERR: " << (err / norm) << std::endl;
     }
     
-    //pressure.swap(new_pressure);
+    pressure.swap(new_pressure);
   }
   
   for (int x = 1; x < w_-1; ++x) {
