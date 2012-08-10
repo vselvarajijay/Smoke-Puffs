@@ -27,7 +27,8 @@ vec4 texture2DBilinear( sampler2D textureSampler, vec2 uv )
 
 void main()
 {
-  //gl_FragColor = vec4(v_texCoord.x, v_texCoord.y, 0.0, 1.0);
-  vec4 color = texture2DBilinear(s_texture, v_texCoord);
+  //vec4 color = vec4(v_texCoord.x, v_texCoord.y, 0.0, 1.0);
+  //vec4 color = texture2DBilinear(s_texture, v_texCoord);
+  vec4 color = texture2D(s_texture, v_texCoord);
   gl_FragColor = vec4(1.0, 1.0, 1.0, color.r);
 }

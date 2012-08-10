@@ -14,7 +14,8 @@
 
 #import "Fluid.h"
 
-#define RENDER_LINES 0
+#define RENDER_LINES 1
+#define SHOW_PUPPETS 0
 
 // Uniform index.
 enum
@@ -163,8 +164,8 @@ GLint uniforms[NUM_UNIFORMS];
   
   self.view_width = self.view.frame.size.height;
   self.view_height = self.view.frame.size.width;
-  self.width = MIN(128, self.view_width/6);
-  self.height = MIN(96, self.view_height/6);
+  self.width = 96;//MIN(128, self.view_width/6);
+  self.height = 72;//MIN(96, self.view_height/6);
   self.fluid = new Fluid(self.width, self.height);
   self.fluid->set_smoke_radius(self.width / 16.0f);
   self.dt = 0.25f;
@@ -189,7 +190,9 @@ GLint uniforms[NUM_UNIFORMS];
   red_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
   red_ball.layer.cornerRadius = ball_size/2;
   
+#if SHOW_PUPPETS
   [self.view addSubview:cmView];
+#endif
   
   UIImage *android = [UIImage imageNamed: @"android.png"];
   androidView = [[UIImageView alloc] initWithImage:android];
@@ -200,7 +203,9 @@ GLint uniforms[NUM_UNIFORMS];
   green_ball.frame = CGRectMake(0, 0, ball_size, ball_size);
   green_ball.layer.cornerRadius = ball_size/2;
   
+#if SHOW_PUPPETS
   [self.view addSubview:androidView];
+#endif
   
   soccer_ball = [[UIImageView alloc] initWithImage: [UIImage imageWithContentsOfFile:[[NSBundle mainBundle] pathForResource:@"soccer_ball" ofType:@"png"]]];
   soccer_ball.frame = CGRectMake(0, 0, soccer_ball_size, soccer_ball_size);
@@ -237,7 +242,6 @@ GLint uniforms[NUM_UNIFORMS];
   previous_red_y = self.view_height / 2.0f;
   
   soccer_on = NO;
-  [self setupSoccer];
   
 }
 
@@ -479,19 +483,23 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   CGPoint green_pt = [self fluidCoordsFromScreenCoords:CGPointMake(green_x, green_y)];
   CGPoint previous_green_pt = [self fluidCoordsFromScreenCoords:CGPointMake(previous_green_x, previous_green_y)];
   
+#if SHOW_PUPPETS
   self.fluid->AddImpulse( green_pt.x,
                          green_pt.y,
                          green_pt.x - previous_green_pt.x,
                          green_pt.y - previous_green_pt.y);
+#endif
   
   
   CGPoint red_pt = [self fluidCoordsFromScreenCoords:CGPointMake(red_x, red_y)];
   CGPoint previous_red_pt = [self fluidCoordsFromScreenCoords:CGPointMake(previous_red_x, previous_red_y)];
   
+#if SHOW_PUPPETS
   self.fluid->AddImpulse( red_pt.x,
                          red_pt.y,
                          red_pt.x - previous_red_pt.x,
                          red_pt.y - previous_red_pt.y);
+#endif
   
   previous_green_x = green_x;
   previous_green_y = green_y;
@@ -553,8 +561,9 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   // Render velocity fields as lines with GLKit
 #if RENDER_LINES
   [self.effect prepareToDraw];
+  self.effect.constantColor = GLKVector4Make(1.0f, 0.0f, 0.0f, 1.0f);
   std::vector<float> lines;
-  self.fluid->GetLines(&lines, 3.0);
+  self.fluid->GetLines(&lines, 1.0);
   glEnableVertexAttribArray(GLKVertexAttribPosition);
   glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
   glDrawArrays(GL_LINES, 0, lines.size()/2);
@@ -735,6 +744,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 }
 
 -(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+  return;
   if ([touches anyObject] != nil) {
     if (soccer_on) {
       [self tearDownSoccer];
@@ -742,6 +752,18 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
       [self setupSoccer];
     }
   }
+}
+
+-(void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+  [touches enumerateObjectsUsingBlock:^(id obj, BOOL *stop) {
+    UITouch* touch = obj;
+    CGPoint touch_point = [touch locationInView:self.view];
+    CGPoint previous_touch_point = [touch previousLocationInView:self.view];
+    
+    CGPoint fluid_pos = [self fluidCoordsFromScreenCoords:touch_point];
+    CGPoint previous_fluid_pos = [self fluidCoordsFromScreenCoords:previous_touch_point];
+    self.fluid->AddImpulse(fluid_pos.x, fluid_pos.y, fluid_pos.x - previous_fluid_pos.x, fluid_pos.y - previous_fluid_pos.y);
+  }];
 }
 
 
