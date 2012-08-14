@@ -14,6 +14,42 @@
 
 #include <Accelerate/Accelerate.h>
 
+#import "TargetConditionals.h"
+
+void Fluid::InterpolateXVelocities(const std::vector<float>& xs,
+                            const std::vector<float>& ys,
+                            float* vx) {
+  for (int i = 0; i < xs.size(); ++i) {
+    float x = xs[i];
+    float y = ys[i] - 0.5f;
+    int sx = static_cast<int>(x);
+    int sy = static_cast<int>(y);
+    float fx = x - sx;
+    float fy = y - sy;
+    float flx = (1.0f - fx);
+    float fhx = fx;
+    float fly = (1.0f - fy);
+    float fhy = fy;
+    float result = 0.0f;
+    float count = 1e-20f;
+    float weight = 0.0f;
+    int here = fidx(0,sx,sy);
+    weight = flx*fly;//*fluid_face_[here];
+    result += weight*fluxes_[here];
+    count += weight;
+    weight = flx*fhy;//*fluid_face_[here+1];
+    result += weight*fluxes_[here+1];
+    count += weight;
+    weight = fhx*fly;//*fluid_face_[here+h_];
+    result += weight*fluxes_[here+h_];
+    count += weight;
+    weight = flx*fly;//*fluid_face_[here+h_+1];
+    result += weight*fluxes_[here+h_+1];
+    count += weight;
+    vx[i] = result / count;
+  }
+}
+
 //class FluxInterpolator {
 //public:
 //  FluxInterpolator(int block_size) : block_size_(block_size) {
@@ -44,6 +80,64 @@
 //  std::vector<float> xf_;
 //  std::vector<float> yf_;
 //};
+
+
+#if !TARGET_IPHONE_SIMULATOR
+extern "C" void arm7_jacobi_iteration(float* pressure,
+                                      float* div,
+                                      float* inv_count,
+                                      int w,
+                                      int h,
+                                      float* new_pressure);
+
+void JacobiARM(float* pressure,
+               float* div,
+               float* inv_count,
+               int w,
+               int h,
+               float* new_pressure) {
+  float* prev_pressure_start = pressure;
+  float* pressure_start = pressure + h;
+  float* next_pressure_start = pressure + 2*h;
+  float* new_pressure_start = new_pressure + h;
+  float* div_start = div + h;
+  float* inv_count_start = inv_count + h;
+  int length = (h * (w-2))/2;
+  
+  __asm__
+  (
+   ".align 4                         \n"
+   "L3_%=:                           \n\t"
+   "vldr.f64   d2, [%[p], #-4]       \n\t"
+   "vldr.f64   d3, [%[p], #+4]       \n\t"
+   "vldr.f64   d0, [%[pp]]           \n\t"
+   "vldr.f64   d1, [%[np]]           \n\t"
+   "vldr.f64   d4, [%[d]]            \n\t"
+   "vldr.f64   d5, [%[ic]]           \n\t"
+   "subs.w     %[l], %[l], #1        \n\t"
+   "vadd.f32   d7, d2, d3            \n\t"
+   "vadd.f32   d6, d0, d1            \n\t"
+   "vadd.f32   d6, d6, d4            \n\t"
+   "vadd.f32   d7, d7, d6            \n\t"
+   "vmul.f32   d7, d7, d5            \n\t"
+   "vstr.f64   d7, [%[n]]            \n\t"
+   "add        %[p], %[p], #8        \n\t"
+   "add        %[pp], %[pp], #8      \n\t"
+   "add        %[np], %[np], #8      \n\t"
+   "add        %[ic], %[ic], #8      \n\t"
+   "add        %[n], %[n], #8        \n\t"
+   "add        %[d], %[d], #8        \n\t"
+   "bne        L3_%=                 \n\t"
+   
+   : [p] "+r" (pressure_start), [pp] "+r" (prev_pressure_start), [np] "+r" (next_pressure_start), [d] "+r" (div_start), [n] "+r" (new_pressure_start), [l] "+r" (length), [ic] "+r" (inv_count_start)
+   :
+   : "memory", "cc", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"
+   );
+  
+  pressure[0] = 0.0f;
+}
+
+#endif  // !TARGET_IPHONE_SIMULATOR
 
 Timer::Timer(const std::string& label) : label_(label) {
   total_time_ = 0.0f;
@@ -85,21 +179,35 @@ Fluid::Fluid(int width, int height) : impulse_timer_("Impulse"), advection_timer
       
       if (x == 0 || x == w_ - 1 || y == 0 || y == h_ - 1) {
         fluid_[vidx(x,y)] = 0.0f;
-        fluid_face_[fidx(0,x,y)] = 0.0f;
-        fluid_face_[fidx(1,x,y)] = 0.0f;
       } else {
-        if (x == 1) {
-          fluid_face_[fidx(0,x,y)] = 0.0f;
-        } else if (y == 1) {
-          fluid_face_[fidx(1,x,y)] = 0.0f;
-        } else {
-          fluid_face_[fidx(0,x,y)] = 1.0f;
-          fluid_face_[fidx(1,x,y)] = 1.0f;
-        }
-        
         fluid_[vidx(x,y)] = 1.0f;
       }
       
+      if (x == 0) {
+        fluid_face_[fidx(0,x,y)] = 0.0f;
+      }
+      if (y == 0) {
+        fluid_face_[fidx(1,x,y)] = 0.0f;
+      }
+      if (x > 0 && y > 0) {
+        fluid_face_[fidx(0,x,y)] = 1.0f;
+        fluid_face_[fidx(1,x,y)] = 1.0f;
+      }
+    }
+  }
+  
+  for (int x = 1; x < w_; ++x) {
+    for (int y = 0; y < h_; ++y) {
+      if (fluid_[vidx(x,y)] == 0.0f || fluid_[vidx(x-1,y)] == 0.0f) {
+        fluid_face_[fidx(0,x,y)] = 0.0f;
+      }
+    }
+  }
+  for (int x = 0; x < w_; ++x) {
+    for (int y = 1; y < h_; ++y) {
+      if (fluid_[vidx(x,y)] == 0.0f || fluid_[vidx(x,y-1)] == 0.0f) {
+        fluid_face_[fidx(1,x,y)] = 0.0f;
+      }
     }
   }
   
@@ -150,8 +258,41 @@ void Fluid::Advect(float dt) {
 //  }
   
 
+//  std::vector<float> x_points(w_*h_);
+//  std::vector<float> y_points(w_*h_);
+//  std::vector<float> x_mid_results(w_*h_);
+//  std::vector<float> y_mid_results(w_*h_);
+//  std::vector<float> x_results(w_*h_);
+//  std::vector<float> y_results(w_*h_);
+//  
+//  
+//  for (int x = 0;x < w_; ++x) {
+//    for (int y = 0; y < h_; ++y) {
+//      x_points[vidx(x,y)] = x;
+//      y_points[vidx(x,y)] = y + 0.5f;
+//    }
+//  }
+//  InterpolateVelocities(x_points, y_points, &x_mid_results[0], &y_mid_results[0]);
+//  for (int x = 0;x < w_; ++x) {
+//    for (int y = 0; y < h_; ++y) {
+//      int here = vidx(x,y);
+//      x_mid_results[here] = Clip(x_points[here] - dt*0.5f*x_mid_results[here], 1.0f, (w_ - 1.0f) - 1e-6f);
+//      y_mid_results[here] = Clip(y_points[here] - dt*0.5f*y_mid_results[here], 1.0f, (h_ - 1.0f) - 1e-6f);
+//    }
+//  }
+//  InterpolateVelocities(x_mid_results, y_mid_results, &x_results[0], &y_results[0]);
+//  for (int x = 0;x < w_; ++x) {
+//    for (int y = 0; y < h_; ++y) {
+//      int here = vidx(x,y);
+//      x_results[here] = Clip(x_points[here] - dt*x_results[here], 1.0f, (w_ - 1.0f) - 1e-6f);
+//      y_results[here] = Clip(y_points[here] - dt*y_results[here], 1.0f, (h_ - 1.0f) - 1e-6f);
+//    }
+//  }
+//  InterpolateXVelocities(x_results, y_results, &new_fluxes[0]);
   
-  for (int x = 2;x < w_-1; ++x) {
+  
+  
+  for (int x = 1;x < w_-1; ++x) {
     for (int y = 1; y < h_-1; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
@@ -159,7 +300,7 @@ void Fluid::Advect(float dt) {
     }
   }
   for (int x = 1; x < w_-1; ++x) {
-    for (int y = 2; y < h_-1; ++y) {
+    for (int y = 1; y < h_-1; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
       new_fluxes[fidx(1,x,y)] = 0.999f*InterpolateYVelocity(ClipPoint(source));
@@ -174,8 +315,11 @@ void Fluid::Project() {
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
-      if (x == 0 || x == 1 || x == w_-1) fluxes_[fidx(0,x,y)] = 0.0f;
-      if (y == 0 || y == 1 || y == h_-1) fluxes_[fidx(1,x,y)] = 0.0f;
+      int xidx = fidx(0, x, y);
+      int yidx = fidx(1, x, y);
+      
+      fluxes_[xidx] *= fluid_face_[xidx];
+      fluxes_[yidx] *= fluid_face_[yidx];
     }
   }
   
@@ -183,15 +327,15 @@ void Fluid::Project() {
     for (int y = 1; y < h_-1; ++y) {
       int here = vidx(x, y);
       pressure[here] = 0.0f;
-      if (x > 1) pressure[here] += fluxes_[fidx(0,x,y)];
-      if (x < w_-2) pressure[here] -= fluxes_[fidx(0,x+1,y)];
-      if (y > 1) pressure[here] += fluxes_[fidx(1,x,y)];
-      if (y < h_-2) pressure[here] -= fluxes_[fidx(1,x,y+1)];
+      pressure[here] += fluxes_[fidx(0,x,y)];
+      pressure[here] -= fluxes_[fidx(0,x+1,y)];
+      pressure[here] += fluxes_[fidx(1,x,y)];
+      pressure[here] -= fluxes_[fidx(1,x,y+1)];
       div[here] = pressure[here];
       
       // initialized with div => converges Gauss-Seidel, but not Jacobi
       // initialized with zero => converges Jacobi (and maybe GS)
-      pressure[here] = 0.0;
+      pressure[here] = 0.0f;
     }
   }
   
@@ -210,18 +354,48 @@ void Fluid::Project() {
 //  float one_minus_omega = 1.0f - omega;
 //  vDSP_vsmul(&inv_count[0], 1, &omega, &inv_count[0], 1, w_*h_);
   
-  std::vector<float> sigma(w_*h_);
+  //std::vector<float> sigma(w_*h_);
   std::vector<float> new_pressure(w_*h_);
-  const int MAX_ITERS = 60;
+  const int MAX_ITERS = 50;
   for (int k = 0; k < MAX_ITERS; ++k) {
     // Jacobi
+#if !TARGET_IPHONE_SIMULATOR
+    arm7_jacobi_iteration(&pressure[0],
+                          &div[0],
+                          &inv_count[0],
+                          w_,
+                          h_,
+                          &new_pressure[0]);
+#else
     for (int x = 1; x < w_-1; ++x) {
-      vDSP_vadd(&pressure[0] + x*h_ + h_, 1, &pressure[0] + x*h_ + 1, 1, &sigma[0] + x*h_, 1, h_);
-      vDSP_vadd(&pressure[0] + x*h_ - h_, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
-      vDSP_vadd(&pressure[0] + x*h_ - 1, 1, &sigma[0] + x*h_, 1, &sigma[0] + x*h_, 1, h_);
-      vDSP_vam(&sigma[0] + x*h_, 1, &div[0] + x*h_, 1, &inv_count[0] + x*h_, 1, &new_pressure[0] + x*h_, 1, h_);
+      float* pressure_start = &pressure[0] + x*h_;
+      float* new_pressure_start = &new_pressure[0] + x*h_;
+      
+      vDSP_vadd(pressure_start + h_, 1, pressure_start + 1, 1, new_pressure_start, 1, h_);
+      vDSP_vadd(pressure_start - h_, 1, new_pressure_start, 1, new_pressure_start, 1, h_);
+      vDSP_vadd(pressure_start - 1, 1, new_pressure_start, 1, new_pressure_start, 1, h_);
+      vDSP_vam(new_pressure_start, 1, &div[0] + x*h_, 1, &inv_count[0] + x*h_, 1, new_pressure_start, 1, h_);
     }
+#endif  // !TARGET_IPHONE_SIMULATOR
     
+
+
+    
+    // Gauss-Seidel
+//        if (k == MAX_ITERS - 1) {
+//          std::copy(pressure.begin(), pressure.end(), new_pressure.begin());
+//        }
+//    for (int offset = 0; offset < 2; ++offset) {
+//      for (int x = 1; x < w_-1; ++x) {
+//        float* pressure_start = &pressure[0] + x*h_ + (offset+x)%2;
+//        
+//        vDSP_vadd(pressure_start + h_, 2, pressure_start + 1, 2, pressure_start, 2, h_/2);
+//        vDSP_vadd(pressure_start - h_, 2, pressure_start, 2, pressure_start, 2, h_/2);
+//        vDSP_vadd(pressure_start - 1, 2, pressure_start, 2, pressure_start, 2, h_/2);
+//        vDSP_vam(pressure_start, 2, &div[0] + x*h_ + (offset+x)%2, 2, &inv_count[0] + x*h_ + (offset+x)%2, 2, pressure_start, 2, h_/2);
+//      }
+//    }
+//    pressure.swap(new_pressure);
 
     
     // SOR
@@ -247,32 +421,22 @@ void Fluid::Project() {
 //      vDSP_vam(&sigma[0] + x*h_ + odd_offset, 2, &div[0] + x*h_ + odd_offset, 2, &inv_count[0] + x*h_ + odd_offset, 2, &sigma[0] + x*h_ + odd_offset, 2, h_/2);
 //      vDSP_vadd(&sigma[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, &pressure[0] + x*h_ + odd_offset, 2, h_/2);
 //    }
+    
 
-    // Scalar Jacobi
-//    for (int x = 1; x < w_-1; ++x) {
-//      for (int y = 1; y < h_-1; ++y) {
-//        int here = vidx(x,y);
-//        float sigma = 0.0f;
-//        sigma += pressure[here + h_];
-//        sigma += pressure[here - h_];
-//        sigma += pressure[here + 1];
-//        sigma += pressure[here - 1];
-//        new_pressure[here] = (sigma + div[here]) * inv_count[here] * fluid_[here];
+
+//    if (k == MAX_ITERS - 1) {
+//      float norm = 0.0f;
+//      float err = 0.0f;
+//      for (int x = 1; x < w_-1; ++x) {
+//        for (int y = 1; y < h_-1; ++y) {
+//          int here = vidx(x, y);
+//          norm += new_pressure[here]*new_pressure[here];
+//          float diff = new_pressure[here] - pressure[here];
+//          err += diff*diff;
+//        }
 //      }
+//      std::cerr << "FINAL REL ERR: " << (err / norm) << std::endl;
 //    }
-    if (k == MAX_ITERS - 1) {
-      float norm = 0.0f;
-      float err = 0.0f;
-      for (int x = 1; x < w_-1; ++x) {
-        for (int y = 1; y < h_-1; ++y) {
-          int here = vidx(x, y);
-          norm += new_pressure[here]*new_pressure[here];
-          float diff = new_pressure[here] - pressure[here];
-          err += diff*diff;
-        }
-      }
-      std::cerr << "FINAL REL ERR: " << (err / norm) << std::endl;
-    }
     
     pressure.swap(new_pressure);
   }
@@ -294,13 +458,28 @@ void Fluid::AdvectPoint(float dt, float x0, float y0, float* xf, float* yf) {
 
 void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
   line_coords->clear();
-  line_coords->reserve(w_*h_*4);
+  line_coords->reserve(w_*h_*8);
   for (int x = 1; x < w_-1; ++x) {
     for (int y = 1; y < h_-1; ++y) {
-      line_coords->push_back(x + 0.5); 
-      line_coords->push_back(y + 0.5); 
-      line_coords->push_back(x + 0.5 + scale*CellCenterVelocity(x, y)[0]);
-      line_coords->push_back(y + 0.5 + scale*CellCenterVelocity(x, y)[1]);
+      if (x > 0 && y > 0) {
+        line_coords->push_back(x - 1.0f + 0.5);
+        line_coords->push_back(y - 1.0f + 0.5);
+        line_coords->push_back(x - 1.0f + 0.5 + scale*CellCenterVelocity(x, y)[0]);
+        line_coords->push_back(y - 1.0f + 0.5 + scale*CellCenterVelocity(x, y)[1]);
+      } else {
+        line_coords->push_back(0.0f);
+        line_coords->push_back(0.0f);
+        line_coords->push_back(0.0f);
+        line_coords->push_back(0.0f);
+      }
+//      line_coords->push_back(x - 1.0f );
+//      line_coords->push_back(y - 1.0f + 0.5f);
+//      line_coords->push_back(x - 1.0f + fluxes_[fidx(0,x,y)]);
+//      line_coords->push_back(y - 1.0f + 0.5f);
+//      line_coords->push_back(x - 1.0f + 0.5f);
+//      line_coords->push_back(y - 1.0f);
+//      line_coords->push_back(x - 1.0f + 0.5f);
+//      line_coords->push_back(y - 1.0f + fluxes_[fidx(1,x,y)]);
     }
   }
 }
@@ -315,10 +494,9 @@ void Fluid::GetDensities(std::vector<float>* densities) {
   }
 }
 
-
 void Fluid::AddImpulse(float x0, float y0, float vx, float vy) {
   pending_impulse_origins_.push_back(Eigen::Vector2f(x0-1.0f, y0-1.0f));
-  pending_impulse_velocities_.push_back(Eigen::Vector2f(vx*50.0f, vy*50.0f));
+  pending_impulse_velocities_.push_back(Eigen::Vector2f(vx*100.0f, vy*100.0f));
 }
 
 void Fluid::ApplyImpulses() {
@@ -339,14 +517,11 @@ void Fluid::ApplyImpulses() {
     int x = static_cast<int>(origin[0]);
     int y = static_cast<int>(origin[1]);
     
-    float fx = origin[0] - x;
-    float fy = origin[1] - y;
-    
     if (x > 2 && x < w_-3 && y > 2 && y < h_-3) {
-      fluxes_[fidx(0,x,y)] += (1.0f-fx) * delta[0];
-      fluxes_[fidx(0,x+1,y)] += fx * delta[0];
-      fluxes_[fidx(1,x,y)] += (1.0f-fy) * delta[1];
-      fluxes_[fidx(1,x,y+1)] += fy * delta[1];
+      fluxes_[fidx(0,x,y)] += delta[0];
+      fluxes_[fidx(0,x+1,y)] += delta[0];
+      fluxes_[fidx(1,x,y)] += delta[1];
+      fluxes_[fidx(1,x,y+1)] += delta[1];
     }
     
     for (int k = -smoke_radius_; k <= smoke_radius_; ++k) {
@@ -366,11 +541,13 @@ void Fluid::ApplyImpulses() {
 }
 
 void Fluid::AdvectDensity(float dt) {
+  std::vector<float> new_densities(densities_.size());
   for (int x = 1; x < w_-1; ++x) {
     for (int y = 1; y < h_-1; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      densities_[vidx(x,y)] = 0.992f * InterpolateDensity(ClipPoint(source));
+      new_densities[vidx(x,y)] = 0.993f * InterpolateDensity(ClipPoint(source));
     }
   }
+  densities_.swap(new_densities);
 }

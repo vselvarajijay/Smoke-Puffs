@@ -46,13 +46,13 @@ class Fluid {
   void GetDensities(std::vector<float>* densities);
   
   void Step(double dt) {
-    impulse_timer_.BeginEvent();
-    ApplyImpulses();
-    impulse_timer_.EndEvent();
-
     advection_timer_.BeginEvent();
     Advect(dt);
     advection_timer_.EndEvent();
+    
+    impulse_timer_.BeginEvent();
+    ApplyImpulses();
+    impulse_timer_.EndEvent();
     
     projection_timer_.BeginEvent();
     Project();
@@ -78,7 +78,7 @@ class Fluid {
   inline float Clip(float x, float lower, float upper) { return std::max(lower, std::min(upper, x)); }
   
   inline Eigen::Vector2f ClipPoint(const Eigen::Vector2f& src) {
-    return Eigen::Vector2f(Clip(src[0], 1.0f, static_cast<float>(w_-1)-1e-6), Clip(src[1], 1.0f, static_cast<float>(h_-1)-1e-6));
+    return Eigen::Vector2f(Clip(src[0], 1.0f, static_cast<float>(w_-1)-1e-8), Clip(src[1], 1.0f, static_cast<float>(h_-1)-1e-8));
   }
   
   inline int fidx(int axis, int x, int y) {
@@ -97,59 +97,46 @@ class Fluid {
 #endif
     return res;
   }
+  
+  void InterpolateXVelocities(const std::vector<float>& xs,
+                              const std::vector<float>& ys,
+                              float* vx);
+  
+  void InterpolateYVelocities(const std::vector<float>& xs,
+                              const std::vector<float>& ys,
+                              float* result) {
+    for (int i = 0; i < xs.size(); ++i) {
+      result[i] = InterpolateYVelocity(Eigen::Vector2f(xs[i], ys[i]));
+    }
+  }
+  
+  void InterpolateVelocities(const std::vector<float>& xs,
+                             const std::vector<float>& ys,
+                             float* x_result,
+                             float* y_result) {
+    InterpolateXVelocities(xs, ys, x_result);
+    InterpolateYVelocities(xs, ys, y_result);
+  }  
+  
   inline float InterpolateXVelocity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0]);
     int sy = static_cast<int>(source[1] - 0.5f);
     float fx = source[0] - sx;
     float fy = source[1] - 0.5f - sy;
-    float flx = (1.0f - fx);
-    float fhx = fx;
-    float fly = (1.0f - fy);
-    float fhy = fy;
-    float result = 0.0f;
-    float count = 1e-20f;
-    float weight = 0.0f;
     int here = fidx(0,sx,sy);
-    weight = flx*fly*fluid_face_[here];
-    result += weight*fluxes_[here];
-    count += weight;
-    weight = flx*fhy*fluid_face_[here+1];
-    result += weight*fluxes_[here+1];
-    count += weight;
-    weight = fhx*fly*fluid_face_[here+h_];
-    result += weight*fluxes_[here+h_];
-    count += weight;
-    weight = flx*fly*fluid_face_[here+h_+1];
-    result += weight*fluxes_[here+h_+1];
-    count += weight;
-    return result / count;
+    float lowx = fluxes_[here] + fy*(fluxes_[here+1] - fluxes_[here]);
+    float highx = fluxes_[here+h_] + fy*(fluxes_[here+h_+1] - fluxes_[here+h_]);
+    return lowx + fx*(highx - lowx);
   }
   inline float InterpolateYVelocity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0] - 0.5f);
     int sy = static_cast<int>(source[1]);
     float fx = source[0] - 0.5f - sx;
     float fy = source[1] - sy;
-    float flx = (1.0f - fx);
-    float fhx = fx;
-    float fly = (1.0f - fy);
-    float fhy = fy;
-    float result = 0.0f;
-    float count = 1e-20f;
-    float weight = 0.0f;
     int here = fidx(1,sx,sy);
-    weight = flx*fly*fluid_face_[here];
-    result += weight*fluxes_[here];
-    count += weight;
-    weight = flx*fhy*fluid_face_[here+1];
-    result += weight*fluxes_[here+1];
-    count += weight;
-    weight = fhx*fly*fluid_face_[here+h_];
-    result += weight*fluxes_[here+h_];
-    count += weight;
-    weight = flx*fly*fluid_face_[here+h_+1];
-    result += weight*fluxes_[here+h_+1];
-    count += weight;
-    return result / count;
+    float lowx = fluxes_[here] + fy*(fluxes_[here+1] - fluxes_[here]);
+    float highx = fluxes_[here+h_] + fy*(fluxes_[here+h_+1] - fluxes_[here+h_]);
+    return lowx + fx*(highx - lowx);
   }
   inline float InterpolateDensity(const Eigen::Vector2f& source) {
     int sx = static_cast<int>(source[0] - 0.5f);
@@ -163,17 +150,18 @@ class Fluid {
     float result = 0.0f;
     float count = 1e-20f;
     float weight = 0.0f;
-    weight = flx*fly*fluid_[vidx(sx,sy)];
-    result += weight*densities_[vidx(sx,sy)];
+    int here = vidx(sx,sy);
+    weight = flx*fly*fluid_[here];
+    result += weight*densities_[here];
     count += weight;
-    weight = flx*fhy*fluid_[vidx(sx,sy+1)];
-    result += weight*densities_[vidx(sx,sy+1)];
+    weight = flx*fhy*fluid_[here+1];
+    result += weight*densities_[here+1];
     count += weight;
-    weight = fhx*fly*fluid_[vidx(sx+1,sy)];
-    result += weight*densities_[vidx(sx+1,sy)];
+    weight = fhx*fly*fluid_[here+h_];
+    result += weight*densities_[here+h_];
     count += weight;
-    weight = fhx*fhy*fluid_[vidx(sx+1,sy+1)];
-    result += weight*densities_[vidx(sx+1,sy+1)];
+    weight = fhx*fhy*fluid_[here+h_+1];
+    result += weight*densities_[here+h_+1];
     count += weight;
     return result / count;
   }

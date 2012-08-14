@@ -14,7 +14,7 @@
 
 #import "Fluid.h"
 
-#define RENDER_LINES 1
+#define RENDER_LINES 0
 #define SHOW_PUPPETS 0
 
 // Uniform index.
@@ -164,10 +164,10 @@ GLint uniforms[NUM_UNIFORMS];
   
   self.view_width = self.view.frame.size.height;
   self.view_height = self.view.frame.size.width;
-  self.width = 96;//MIN(128, self.view_width/6);
-  self.height = 72;//MIN(96, self.view_height/6);
+  self.width = 160;//MIN(128, self.view_width/6);
+  self.height = 120;//MIN(96, self.view_height/6);
   self.fluid = new Fluid(self.width, self.height);
-  self.fluid->set_smoke_radius(self.width / 16.0f);
+  self.fluid->set_smoke_radius(self.width / 20.0f);
   self.dt = 0.25f;
   self.ball_x = self.width * 0.5f;
   self.ball_y = self.height * 0.5f;
@@ -563,7 +563,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
   [self.effect prepareToDraw];
   self.effect.constantColor = GLKVector4Make(1.0f, 0.0f, 0.0f, 1.0f);
   std::vector<float> lines;
-  self.fluid->GetLines(&lines, 1.0);
+  self.fluid->GetLines(&lines, 0.3);
   glEnableVertexAttribArray(GLKVertexAttribPosition);
   glVertexAttribPointer(GLKVertexAttribPosition, 2, GL_FLOAT, GL_FALSE, 0, &(lines[0]));
   glDrawArrays(GL_LINES, 0, lines.size()/2);
