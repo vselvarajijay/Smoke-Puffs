@@ -50,37 +50,6 @@ void Fluid::InterpolateXVelocities(const std::vector<float>& xs,
   }
 }
 
-//class FluxInterpolator {
-//public:
-//  FluxInterpolator(int block_size) : block_size_(block_size) {
-//    x_.resize(block_size);
-//    y_.resize(block_size);
-//    xf_.resize(block_size);
-//    yf_.resize(block_size);
-//  }
-//  
-//  void Interpolate(float* in_flux,
-//                   int in_stride,
-//                   float* x_coords,
-//                   int x_stride,
-//                   float* y_coords,
-//                   int y_stride,
-//                   float* out_flux,
-//                   int out_stride,
-//                   int length) {
-//    vDSP_vfixu16(x_coords, 1, &x_[0], 1, length);
-//    vDSP_vfixu16(y_coords, 1, &y_[0], 1, length);
-//    vDSP_vfrac(x_coords, 1, &xf_[0], 1, length);
-//    vDSP_vfrac(y_coords, 1, &yf_[0], 1, length);
-//  }
-//  
-//private:
-//  int block_size_;
-//  std::vector<float> base_;
-//  std::vector<float> xf_;
-//  std::vector<float> yf_;
-//};
-
 
 #if !TARGET_IPHONE_SIMULATOR
 extern "C" void arm7_jacobi_iteration(float* pressure,
@@ -89,54 +58,6 @@ extern "C" void arm7_jacobi_iteration(float* pressure,
                                       int w,
                                       int h,
                                       float* new_pressure);
-
-void JacobiARM(float* pressure,
-               float* div,
-               float* inv_count,
-               int w,
-               int h,
-               float* new_pressure) {
-  float* prev_pressure_start = pressure;
-  float* pressure_start = pressure + h;
-  float* next_pressure_start = pressure + 2*h;
-  float* new_pressure_start = new_pressure + h;
-  float* div_start = div + h;
-  float* inv_count_start = inv_count + h;
-  int length = (h * (w-2))/2;
-  
-  __asm__
-  (
-   ".align 4                         \n"
-   "L3_%=:                           \n\t"
-   "vldr.f64   d2, [%[p], #-4]       \n\t"
-   "vldr.f64   d3, [%[p], #+4]       \n\t"
-   "vldr.f64   d0, [%[pp]]           \n\t"
-   "vldr.f64   d1, [%[np]]           \n\t"
-   "vldr.f64   d4, [%[d]]            \n\t"
-   "vldr.f64   d5, [%[ic]]           \n\t"
-   "subs.w     %[l], %[l], #1        \n\t"
-   "vadd.f32   d7, d2, d3            \n\t"
-   "vadd.f32   d6, d0, d1            \n\t"
-   "vadd.f32   d6, d6, d4            \n\t"
-   "vadd.f32   d7, d7, d6            \n\t"
-   "vmul.f32   d7, d7, d5            \n\t"
-   "vstr.f64   d7, [%[n]]            \n\t"
-   "add        %[p], %[p], #8        \n\t"
-   "add        %[pp], %[pp], #8      \n\t"
-   "add        %[np], %[np], #8      \n\t"
-   "add        %[ic], %[ic], #8      \n\t"
-   "add        %[n], %[n], #8        \n\t"
-   "add        %[d], %[d], #8        \n\t"
-   "bne        L3_%=                 \n\t"
-   
-   : [p] "+r" (pressure_start), [pp] "+r" (prev_pressure_start), [np] "+r" (next_pressure_start), [d] "+r" (div_start), [n] "+r" (new_pressure_start), [l] "+r" (length), [ic] "+r" (inv_count_start)
-   :
-   : "memory", "cc", "d0", "d1", "d2", "d3", "d4", "d5", "d6", "d7"
-   );
-  
-  pressure[0] = 0.0f;
-}
-
 #endif  // !TARGET_IPHONE_SIMULATOR
 
 Timer::Timer(const std::string& label) : label_(label) {
