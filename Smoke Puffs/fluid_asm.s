@@ -50,16 +50,16 @@ add     r1, r1, r4
 add     r2, r2, r4
 add     r8, r6, r4
 add     r5, r5, r4
+add     r6, r6, #-4
 
 // calculate first result
-vld1.32     {d0}, [r0,:64]!
-vld1.32     {d1}, [r8,:64]!
-vldr.f64    d2, [r6, #-4]
+vld1.32     {d0}, [r0]!
+vld1.32     {d1}, [r8]!
+vldm.f32    r6, {d2-d3}
 vadd.f32    d0, d0, d1
-vldr.f64    d3, [r6, #+4]
-vld1.32     {d4}, [r1,:64]!
+vld1.32     {d4}, [r1]!
 vadd.f32    d2, d2, d3
-vld1.32     {d5}, [r2,:64]!
+vld1.32     {d5}, [r2]!
 vadd.f32    d0, d0, d4
 subs        r3, r3, #1
 add         r6, r6, #8
@@ -92,9 +92,8 @@ Ljacobi:
 vld1.32     {d0}, [r0,:64]!
 vld1.32     {d1}, [r8,:64]!
 vmul.f32    d6, d6, d5
-vldr.f64    d2, [r6, #-4]
+vldm.f32    r6, {d2-d3}
 vadd.f32    d0, d0, d1
-vldr.f64    d3, [r6, #+4]
 vld1.32     {d4}, [r1,:64]!
 vadd.f32    d2, d2, d3
 vld1.32     {d5}, [r2,:64]!

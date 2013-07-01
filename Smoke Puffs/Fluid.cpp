@@ -14,11 +14,9 @@
 
 #include <Accelerate/Accelerate.h>
 
-#import "TargetConditionals.h"
-
 void Fluid::InterpolateXVelocities(const std::vector<float>& xs,
-                            const std::vector<float>& ys,
-                            float* vx) {
+                                   const std::vector<float>& ys,
+                                   float* vx) {
   for (int i = 0; i < xs.size(); ++i) {
     float x = xs[i];
     float y = ys[i] - 0.5f;
@@ -26,27 +24,10 @@ void Fluid::InterpolateXVelocities(const std::vector<float>& xs,
     int sy = static_cast<int>(y);
     float fx = x - sx;
     float fy = y - sy;
-    float flx = (1.0f - fx);
-    float fhx = fx;
-    float fly = (1.0f - fy);
-    float fhy = fy;
-    float result = 0.0f;
-    float count = 1e-20f;
-    float weight = 0.0f;
     int here = fidx(0,sx,sy);
-    weight = flx*fly;//*fluid_face_[here];
-    result += weight*fluxes_[here];
-    count += weight;
-    weight = flx*fhy;//*fluid_face_[here+1];
-    result += weight*fluxes_[here+1];
-    count += weight;
-    weight = fhx*fly;//*fluid_face_[here+h_];
-    result += weight*fluxes_[here+h_];
-    count += weight;
-    weight = flx*fly;//*fluid_face_[here+h_+1];
-    result += weight*fluxes_[here+h_+1];
-    count += weight;
-    vx[i] = result / count;
+    float lowx = fluxes_[here] + fy*(fluxes_[here+1] - fluxes_[here]);
+    float highx = fluxes_[here+h_] + fy*(fluxes_[here+h_+1] - fluxes_[here+h_]);
+    vx[i] = lowx + fx*(highx - lowx);
   }
 }
 
@@ -83,22 +64,27 @@ void Timer::Print() {
   std::cerr << label_ << ": " << (total_time_ / static_cast<float>(total_events_)) << " ms avg. over " << total_events_ << " events" << std::endl;
 }
 
-Fluid::Fluid(int width, int height) : impulse_timer_("Impulse"), advection_timer_("Advection"), projection_timer_("Projection"), density_timer_("Density") {
-  w_ = width + 2;
-  h_ = height + 2;
+Fluid::Fluid(int width, int height) : impulse_timer_("Impulse"), advection_timer_("Advection"), vorticity_timer_("Vorticity"), projection_timer_("Projection"), density_timer_("Density") {
+  w_ = width + 4;
+  h_ = height + 4;
   
   fluxes_.resize(w_*h_*2);
   densities_.resize(w_*h_);
   fluid_.resize(w_*h_);
   fluid_face_.resize(w_*h_*2);
+  cell_centered_vels_.resize(w_*h_*2);
+  vorticities_.resize(w_*h_);
   
   for (int x = 0; x < w_; ++x) {
     for (int y = 0; y < h_; ++y) {
       fluxes_[fidx(0,x,y)] = 0.0f;
       fluxes_[fidx(1,x,y)] = 0.0f;
       densities_[vidx(x,y)] = 0.0f;
+      cell_centered_vels_[fidx(0,x,y)] = 0.0f;
+      cell_centered_vels_[fidx(1,x,y)] = 0.0f;
+      vorticities_[vidx(x,y)] = 0.0f;
       
-      if (x == 0 || x == w_ - 1 || y == 0 || y == h_ - 1) {
+      if (x < 2 || x >= w_ - 2 || y < 2 || y >= h_ - 2) {
         fluid_[vidx(x,y)] = 0.0f;
       } else {
         fluid_[vidx(x,y)] = 1.0f;
@@ -130,10 +116,6 @@ Fluid::Fluid(int width, int height) : impulse_timer_("Impulse"), advection_timer
         fluid_face_[fidx(1,x,y)] = 0.0f;
       }
     }
-  }
-  
-  for (int i = 0; i < 10; ++i) {
-    //Project();
   }
   
   smoke_radius_ = 8;
@@ -197,37 +179,72 @@ void Fluid::Advect(float dt) {
 //  for (int x = 0;x < w_; ++x) {
 //    for (int y = 0; y < h_; ++y) {
 //      int here = vidx(x,y);
-//      x_mid_results[here] = Clip(x_points[here] - dt*0.5f*x_mid_results[here], 1.0f, (w_ - 1.0f) - 1e-6f);
-//      y_mid_results[here] = Clip(y_points[here] - dt*0.5f*y_mid_results[here], 1.0f, (h_ - 1.0f) - 1e-6f);
+//      x_mid_results[here] = Clip(x_points[here] - dt*0.5f*x_mid_results[here], 2.0f, (w_ - 2.0f) - 1e-6f);
+//      y_mid_results[here] = Clip(y_points[here] - dt*0.5f*y_mid_results[here], 2.0f, (h_ - 2.0f) - 1e-6f);
 //    }
 //  }
 //  InterpolateVelocities(x_mid_results, y_mid_results, &x_results[0], &y_results[0]);
 //  for (int x = 0;x < w_; ++x) {
 //    for (int y = 0; y < h_; ++y) {
 //      int here = vidx(x,y);
-//      x_results[here] = Clip(x_points[here] - dt*x_results[here], 1.0f, (w_ - 1.0f) - 1e-6f);
-//      y_results[here] = Clip(y_points[here] - dt*y_results[here], 1.0f, (h_ - 1.0f) - 1e-6f);
+//      x_results[here] = Clip(x_points[here] - dt*x_results[here], 2.0f, (w_ - 2.0f) - 1e-6f);
+//      y_results[here] = Clip(y_points[here] - dt*y_results[here], 2.0f, (h_ - 2.0f) - 1e-6f);
 //    }
 //  }
 //  InterpolateXVelocities(x_results, y_results, &new_fluxes[0]);
   
   
   
-  for (int x = 1;x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2;x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x, y + 0.5) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(0,x,y)] = 0.999f*InterpolateXVelocity(ClipPoint(source));
+      new_fluxes[fidx(0,x,y)] = InterpolateXVelocity(ClipPoint(source));
     }
   }
-  for (int x = 1; x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2; x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_fluxes[fidx(1,x,y)] = 0.999f*InterpolateYVelocity(ClipPoint(source));
+      new_fluxes[fidx(1,x,y)] = InterpolateYVelocity(ClipPoint(source));
     }
   }
   fluxes_.swap(new_fluxes);
+}
+
+void Fluid::ConfineVorticity(float dt) {
+  for (int x = 2; x < w_ - 2; ++x) {
+    for (int y = 2; y < h_ - 2; ++y) {
+      cell_centered_vels_[fidx(0,x,y)] = 0.5f*(fluxes_[fidx(0,x+1,y)] + fluxes_[fidx(0,x,y)]);
+      cell_centered_vels_[fidx(1,x,y)] = 0.5f*(fluxes_[fidx(1,x,y+1)] + fluxes_[fidx(1,x,y)]);
+    }
+  }
+  
+  for (int x = 2; x < w_ - 2; ++x) {
+    for (int y = 2; y < h_ - 2; ++y) {
+      vorticities_[vidx(x,y)] = cell_centered_vels_[fidx(0,x,y-1)] -
+      cell_centered_vels_[fidx(0,x,y+1)] -
+      cell_centered_vels_[fidx(1,x-1,y)] +
+      cell_centered_vels_[fidx(1,x+1,y)];
+    }
+  }
+  
+  const float eps = 0.05f;
+  for (int x = 2; x < w_ - 2; ++x) {
+    for (int y = 2; y < h_ - 2; ++y) {
+      float gradient_x = 0.5f*(fabs(vorticities_[vidx(x+1,y)]) - fabs(vorticities_[vidx(x-1,y)]));
+      float gradient_y = 0.5f*(fabs(vorticities_[vidx(x,y+1)]) - fabs(vorticities_[vidx(x,y-1)]));
+      float gradient_len = hypot(gradient_x, gradient_y) + 1e-20;
+      float force_scale = 0.5f * dt * eps * vorticities_[vidx(x,y)] / gradient_len;
+      float force_x = force_scale * gradient_y;
+      float force_y = -force_scale * gradient_x;
+      
+      fluxes_[fidx(0,x-1,y)] += force_x;
+      fluxes_[fidx(0,x+1,y)] += force_x;
+      fluxes_[fidx(1,x,y-1)] += force_y;
+      fluxes_[fidx(1,x,y+1)] += force_y;
+    }
+  }
 }
 
 void Fluid::Project() {
@@ -244,8 +261,8 @@ void Fluid::Project() {
     }
   }
   
-  for (int x = 1; x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2; x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       int here = vidx(x, y);
       pressure[here] = 0.0f;
       pressure[here] += fluxes_[fidx(0,x,y)];
@@ -281,14 +298,14 @@ void Fluid::Project() {
   for (int k = 0; k < MAX_ITERS; ++k) {
     // Jacobi
 #if !TARGET_IPHONE_SIMULATOR
-    arm7_jacobi_iteration(&pressure[0],
-                          &div[0],
-                          &inv_count[0],
+    arm7_jacobi_iteration(&pressure[0]+h_,
+                          &div[0]+h_,
+                          &inv_count[0]+h_,
                           w_,
                           h_,
-                          &new_pressure[0]);
+                          &new_pressure[0]+h_);
 #else
-    for (int x = 1; x < w_-1; ++x) {
+    for (int x = 2; x < w_-2; ++x) {
       float* pressure_start = &pressure[0] + x*h_;
       float* new_pressure_start = &new_pressure[0] + x*h_;
       
@@ -362,8 +379,8 @@ void Fluid::Project() {
     pressure.swap(new_pressure);
   }
   
-  for (int x = 1; x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2; x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       fluxes_[fidx(0,x,y)] -= fluid_[vidx(x,y)]*fluid_[vidx(x-1,y)]*(pressure[vidx(x,y)] - pressure[vidx(x-1,y)]);
       fluxes_[fidx(1,x,y)] -= fluid_[vidx(x,y)]*fluid_[vidx(x,y-1)]*(pressure[vidx(x,y)] - pressure[vidx(x,y-1)]);
     }
@@ -380,13 +397,13 @@ void Fluid::AdvectPoint(float dt, float x0, float y0, float* xf, float* yf) {
 void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
   line_coords->clear();
   line_coords->reserve(w_*h_*8);
-  for (int x = 1; x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2; x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       if (x > 0 && y > 0) {
-        line_coords->push_back(x - 1.0f + 0.5);
-        line_coords->push_back(y - 1.0f + 0.5);
-        line_coords->push_back(x - 1.0f + 0.5 + scale*CellCenterVelocity(x, y)[0]);
-        line_coords->push_back(y - 1.0f + 0.5 + scale*CellCenterVelocity(x, y)[1]);
+        line_coords->push_back(x - 2.0f + 0.5);
+        line_coords->push_back(y - 2.0f + 0.5);
+        line_coords->push_back(x - 2.0f + 0.5 + scale*CellCenterVelocity(x, y)[0]);
+        line_coords->push_back(y - 2.0f + 0.5 + scale*CellCenterVelocity(x, y)[1]);
       } else {
         line_coords->push_back(0.0f);
         line_coords->push_back(0.0f);
@@ -408,15 +425,15 @@ void Fluid::GetLines(std::vector<float>* line_coords, float scale) {
 void Fluid::GetDensities(std::vector<float>* densities) {
   densities->clear();
   densities->reserve(densities_.size());
-  for (int y = 1; y < h_-1; ++y) {
-    for (int x= 1; x < w_-1; ++x) {
+  for (int y = 2; y < h_-2; ++y) {
+    for (int x= 2; x < w_-2; ++x) {
       densities->push_back(densities_[vidx(x,y)]);
     }
   }
 }
 
 void Fluid::AddImpulse(float x0, float y0, float vx, float vy) {
-  pending_impulse_origins_.push_back(Eigen::Vector2f(x0-1.0f, y0-1.0f));
+  pending_impulse_origins_.push_back(Eigen::Vector2f(x0+2.0f, y0+2.0f));
   pending_impulse_velocities_.push_back(Eigen::Vector2f(vx*100.0f, vy*100.0f));
 }
 
@@ -438,11 +455,11 @@ void Fluid::ApplyImpulses() {
     int x = static_cast<int>(origin[0]);
     int y = static_cast<int>(origin[1]);
     
-    if (x > 2 && x < w_-3 && y > 2 && y < h_-3) {
+    if (x > 3 && x < w_-3 && y > 3 && y < h_-3) {
       fluxes_[fidx(0,x,y)] += delta[0];
-      fluxes_[fidx(0,x+1,y)] += delta[0];
+      //fluxes_[fidx(0,x+1,y)] += delta[0];
       fluxes_[fidx(1,x,y)] += delta[1];
-      fluxes_[fidx(1,x,y+1)] += delta[1];
+      //fluxes_[fidx(1,x,y+1)] += delta[1];
     }
     
     for (int k = -smoke_radius_; k <= smoke_radius_; ++k) {
@@ -463,12 +480,22 @@ void Fluid::ApplyImpulses() {
 
 void Fluid::AdvectDensity(float dt) {
   std::vector<float> new_densities(densities_.size());
-  for (int x = 1; x < w_-1; ++x) {
-    for (int y = 1; y < h_-1; ++y) {
+  for (int x = 2; x < w_-2; ++x) {
+    for (int y = 2; y < h_-2; ++y) {
       const Eigen::Vector2f mid_source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*0.5*InterpolateVelocity(Eigen::Vector2f(x + 0.5f, y + 0.5f));
       const Eigen::Vector2f source = Eigen::Vector2f(x + 0.5f, y + 0.5f) - dt*InterpolateVelocity(ClipPoint(mid_source));
-      new_densities[vidx(x,y)] = 0.993f * InterpolateDensity(ClipPoint(source));
+      new_densities[vidx(x,y)] = 0.995f * InterpolateDensity(ClipPoint(source));
     }
   }
+  
+  for (int y = 2; y < h_-2; ++y) {
+    new_densities[vidx(1, y)] = new_densities[vidx(2, y)];
+    new_densities[vidx(w_-2, y)] = new_densities[vidx(w_-3, y)];
+  }
+  for (int x = 2; x < w_-2; ++x) {
+    new_densities[vidx(x, 1)] = new_densities[vidx(x, 2)];
+    new_densities[vidx(x, h_-2)] = new_densities[vidx(x, h_-3)];
+  }
+  
   densities_.swap(new_densities);
 }

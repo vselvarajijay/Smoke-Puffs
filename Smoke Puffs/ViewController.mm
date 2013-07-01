@@ -164,8 +164,8 @@ GLint uniforms[NUM_UNIFORMS];
   
   self.view_width = self.view.frame.size.height;
   self.view_height = self.view.frame.size.width;
-  self.width = 160;//MIN(128, self.view_width/6);
-  self.height = 120;//MIN(96, self.view_height/6);
+  self.width = MIN(128, self.view_width/6);
+  self.height = MIN(96, self.view_height/6);
   self.fluid = new Fluid(self.width, self.height);
   self.fluid->set_smoke_radius(self.width / 20.0f);
   self.dt = 0.25f;
